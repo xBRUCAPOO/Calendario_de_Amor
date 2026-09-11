@@ -36,11 +36,11 @@ async function showLocalNotification(title, body) {
   if (navigator.serviceWorker && navigator.serviceWorker.ready) {
     try {
       const reg = await navigator.serviceWorker.ready;
-      reg.showNotification(title, { body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png' });
+      reg.showNotification(title, { body, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png' });
       return;
     } catch (e) { /* seguimos al fallback de abajo */ }
   }
-  new Notification(title, { body, icon: '/icons/icon-192.png' });
+  new Notification(title, { body, icon: 'icons/icon-192.png' });
 }
 
 // Revisa todos los días especiales y dispara una notificación local para los

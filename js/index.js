@@ -21,7 +21,7 @@
     title.textContent = todays.length === 1
       ? `¡Hoy es ${first.name}!`
       : `¡Hoy es ${first.name} y ${todays.length - 1} día especial más!`;
-    banner.style.setProperty('--banner-accent', `var(--special-color-${first.colorIndex})`);
+    banner.style.setProperty('--banner-accent', getAccentColorVar(first));
     banner.style.display = 'flex';
   }
 

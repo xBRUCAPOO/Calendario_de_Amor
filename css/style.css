@@ -1199,3 +1199,28 @@ a {
 .quick-access-btn:active {
   background: var(--bg-surface-elevated);
 }
+
+/* --------------------------------------------------------------------------
+   21) CABECERA FIJA DE fechas.html
+   Agrupa top-bar + buscador + botón de feriados + filtro de categorías para
+   que queden pegados arriba y no haya que scrollear para volver a usarlos.
+   El margen negativo cancela el padding de .screen para que la cabecera
+   llegue de punta a punta y pueda pegarse bien arriba del todo (top: 0);
+   el padding interno repone ese mismo espacio para que no se note el truco.
+   -------------------------------------------------------------------------- */
+.fechas-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  background: var(--bg-app);
+  margin: calc(-1 * var(--space-lg)) calc(-1 * var(--space-md)) 0;
+  padding: var(--space-lg) var(--space-md) var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 480px) {
+  .fechas-sticky-header {
+    margin: calc(-1 * var(--space-xl)) calc(-1 * var(--space-lg)) 0;
+    padding: var(--space-xl) var(--space-lg) var(--space-sm);
+  }
+}

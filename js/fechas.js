@@ -22,8 +22,8 @@
   let activeCategory = 'todas';
 
   document.getElementById('backBtn').addEventListener('click', () => {
-    const cameFromCalendar = document.referrer && document.referrer.includes('/pages/calendario.html');
-    window.location.href = cameFromCalendar ? '/pages/calendario.html' : '/index.html';
+    const cameFromCalendar = document.referrer && document.referrer.includes('calendario.html');
+    window.location.href = cameFromCalendar ? 'calendario.html' : '../index.html';
   });
 
   // Acceso directo: salta al filtro de feriados de un toque
@@ -72,7 +72,7 @@
     listEl.innerHTML = rows.map(({ item, countdown }) => {
       const cat = getCategoryMeta(item.category);
       return `
-      <div class="date-card" style="--card-accent: var(--special-color-${item.colorIndex});" data-id="${item.id}" data-day="${item.day}" data-month="${item.month}">
+      <div class="date-card" style="--card-accent: ${getAccentColorVar(item)};" data-id="${item.id}" data-day="${item.day}" data-month="${item.month}">
         <div class="date-card-top">
           <span class="date-card-day">${formatDayMonth(item.day, item.month)}</span>
           <div class="date-card-info">

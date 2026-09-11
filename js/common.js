@@ -285,6 +285,12 @@ function formatDayMonth(day, month) {
   return `${day} de ${MESES[month - 1]}`;
 }
 
+// Color de acento a usar para un día especial: los feriados siempre se
+// muestran en gris claro (sin color propio), el resto usa su colorIndex.
+function getAccentColorVar(item) {
+  return item.category === 'feriado' ? 'var(--gray-300)' : `var(--special-color-${item.colorIndex})`;
+}
+
 function findDaysOn(list, day, month, year) {
   return list.filter((item) => {
     if (item.day !== day || item.month !== month) return false;
@@ -461,10 +467,11 @@ function buildDayModalHTML(item) {
             <textarea id="dayDescription" placeholder="Usá **palabra** para resaltarla con el color del día...">${isEdit ? escapeHTML(item.description || '') : ''}</textarea>
           </div>
 
-          <div class="field">
+          <div class="field" id="colorField">
             <label>Color</label>
             <div class="color-picker no-scrollbar">${buildColorSwatchesHTML(isEdit ? item.colorIndex : 1)}</div>
           </div>
+          <p class="field-hint" id="feriadoColorHint">Los feriados siempre se muestran en gris claro, sin color propio.</p>
 
           <div class="modal-actions">
             ${isEdit ? `
@@ -503,6 +510,19 @@ function openDayModal(item, onSaved, onDeleted) {
   }
   yearMattersSwitch.addEventListener('change', updateHint);
   updateHint();
+
+  // Los feriados no eligen color: siempre se muestran en gris claro, así que
+  // ocultamos el selector de color y mostramos una aclaración en su lugar.
+  const categorySelect = overlay.querySelector('#dayCategory');
+  const colorField = overlay.querySelector('#colorField');
+  const feriadoColorHint = overlay.querySelector('#feriadoColorHint');
+  function updateColorFieldVisibility() {
+    const isFeriado = categorySelect.value === 'feriado';
+    colorField.style.display = isFeriado ? 'none' : '';
+    feriadoColorHint.style.display = isFeriado ? '' : 'none';
+  }
+  categorySelect.addEventListener('change', updateColorFieldVisibility);
+  updateColorFieldVisibility();
 
   function isDirty() {
     const current = new FormData(form);

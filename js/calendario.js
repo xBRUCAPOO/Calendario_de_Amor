@@ -64,7 +64,7 @@
       if (items && items.length > 0) {
         classes.push('is-special');
         const primary = items[items.length - 1]; // el color visible es el del último cargado
-        style = `style="--day-accent: var(--special-color-${primary.colorIndex});"`;
+        style = `style="--day-accent: ${getAccentColorVar(primary)};"`;
         if (items.length > 1) extraDot = `<span class="extra-count">+${items.length - 1}</span>`;
         // Si alguno de los especiales del día es un feriado, lo aclaramos
         // con una etiqueta chica debajo del número (además del color)
@@ -81,7 +81,7 @@
       cell.addEventListener('click', () => {
         const day = Number(cell.dataset.day);
         saveViewState();
-        window.location.href = `/pages/fechas.html?day=${day}&month=${viewMonth + 1}`;
+        window.location.href = `fechas.html?day=${day}&month=${viewMonth + 1}`;
       });
     });
   }
