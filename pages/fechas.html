@@ -5,21 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0a0a0a">
   <title>Fechas · Fechas Importantes</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icons/icon-192.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
 
-  <link rel="stylesheet" href="style.css?v=1">
+  <link rel="stylesheet" href="/css/style.css?v=3">
 </head>
 <body>
   <div class="screen">
     <div class="top-bar">
-      <a class="icon-button" href="index.html" aria-label="Volver">
-        <span class="material-symbols-outlined">arrow_back</span>
-      </a>
-      <h1>Fechas</h1>
+      <div class="top-bar-left">
+        <button class="icon-button" id="backBtn" aria-label="Volver">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1>Fechas</h1>
+      </div>
     </div>
 
     <div class="search-bar">
@@ -27,10 +31,20 @@
       <input type="text" id="searchInput" placeholder="Buscar por nombre...">
     </div>
 
+    <!-- Botón importante: acceso directo a los feriados -->
+    <div class="quick-access-row">
+      <button type="button" class="quick-access-btn" id="quickHolidaysBtn">
+        <span class="material-symbols-outlined">flag</span> Ver feriados
+      </button>
+    </div>
+
+    <!-- Filtro por categoría: se completa desde fechas.js con CATEGORIES (common.js) -->
+    <div class="category-filter no-scrollbar" id="categoryFilter"></div>
+
     <div class="dates-list" id="datesList"></div>
   </div>
 
-  <script src="common.js?v=1"></script>
-  <script src="fechas.js?v=1"></script>
+  <script src="/js/common.js?v=3"></script>
+  <script src="/js/fechas.js?v=3"></script>
 </body>
 </html>

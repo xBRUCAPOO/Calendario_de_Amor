@@ -81,6 +81,27 @@
   --special-color-28: #db2777;
   --special-color-29: #b91c1c;
   --special-color-30: #15803d;
+  /* Tanda 2 (agregada a pedido): 20 colores más, incluye azul oscuro/navy */
+  --special-color-31: #1e3a8a; /* azul oscuro / navy */
+  --special-color-32: #1e40af;
+  --special-color-33: #075985;
+  --special-color-34: #155e75;
+  --special-color-35: #166534;
+  --special-color-36: #3f6212;
+  --special-color-37: #854d0e;
+  --special-color-38: #9a3412;
+  --special-color-39: #7f1d1d;
+  --special-color-40: #831843;
+  --special-color-41: #581c87;
+  --special-color-42: #4c1d95;
+  --special-color-43: #312e81;
+  --special-color-44: #134e4a;
+  --special-color-45: #a21caf;
+  --special-color-46: #be123c;
+  --special-color-47: #92400e;
+  --special-color-48: #365314;
+  --special-color-49: #0c4a6e;
+  --special-color-50: #451a03;
 
   /* --- Tipografías (Google Fonts, cargadas desde el <link> del <head>) ---
      Nunito: títulos, botones, UI general (redondeada, cálida, muy legible en chico).
@@ -159,6 +180,9 @@ input, textarea {
 
 a {
   color: inherit;
+  /* Reset global: ningún link de la app debe verse subrayado por default
+     (el subrayado nativo del navegador rompía la estética en varios lugares) */
+  text-decoration: none;
 }
 
 /* Íconos Material Symbols: tamaño y alineado consistentes en toda la app */
@@ -307,9 +331,17 @@ a {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   text-align: left;
+  text-decoration: none;
   transition: transform var(--dur-fast) var(--ease-standard),
               background var(--dur-base) var(--ease-standard),
               border-color var(--dur-base) var(--ease-standard);
+}
+
+/* Los botones de la home son <a>: sacamos el subrayado que pone el navegador
+   por defecto a los links, tanto en el propio link como en sus hijos */
+.home-nav-btn,
+.home-nav-btn * {
+  text-decoration: none;
 }
 
 .home-nav-btn:active {
@@ -398,8 +430,10 @@ a {
 .day-cell {
   aspect-ratio: 1 / 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.05rem;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--border-subtle);
   color: var(--text-secondary);
@@ -408,6 +442,15 @@ a {
   font-weight: 500;
   transition: transform var(--dur-fast) var(--ease-standard),
               border-color var(--dur-base) var(--ease-standard);
+}
+
+/* Etiqueta chica debajo del número, solo para feriados */
+.day-cell .day-holiday-label {
+  font-size: 0.5rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
 }
 
 .day-cell:active {
@@ -512,6 +555,7 @@ a {
 
 .field input[type="date"],
 .field input[type="text"],
+.field input[type="number"],
 .field textarea {
   width: 100%;
   padding: 0.75rem 0.9rem;
@@ -524,9 +568,62 @@ a {
 }
 
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   outline: none;
   border-color: var(--text-primary);
+}
+
+/* Ícono nativo del selector de fecha: por defecto sale oscuro y es casi
+   invisible sobre el fondo negro, lo invertimos para que se vea blanco */
+.field input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+/* Sacamos las flechitas +/- nativas del input numérico (el teclado numérico
+   del celular ya cumple esa función y las flechas se veían fuera de estilo) */
+.field input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.field input[type="number"]::-webkit-outer-spin-button,
+.field input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* <select> nativo re-vestido con la estética de la app: se saca el chrome
+   del sistema operativo y se dibuja un ícono Material Symbols propio encima */
+.select-wrap {
+  position: relative;
+}
+
+.select-wrap select {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 0.9rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-body);
+  font-family: inherit;
+  color: var(--text-primary);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.select-wrap select option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.select-wrap .select-chevron {
+  position: absolute;
+  right: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
 }
 
 .field textarea {
@@ -576,12 +673,14 @@ a {
 }
 
 .switch .track {
+  /* Apagado = bien oscuro y apagado a propósito, para que se note que está inactivo */
   position: absolute;
   inset: 0;
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-strong);
+  background: var(--gray-900);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-round);
-  transition: background var(--dur-base) var(--ease-standard);
+  transition: background var(--dur-base) var(--ease-standard),
+              border-color var(--dur-base) var(--ease-standard);
 }
 
 .switch .thumb {
@@ -591,26 +690,39 @@ a {
   width: 1.3rem;
   height: 1.3rem;
   border-radius: 50%;
-  background: var(--gray-400);
+  background: var(--gray-600);
   transition: transform var(--dur-base) var(--ease-standard),
               background var(--dur-base) var(--ease-standard);
 }
 
+/* Activado = track e thumb bien claros, para que el contraste con el estado
+   apagado sea evidente de un vistazo (antes casi no se notaba el cambio) */
 .switch input:checked + .track {
-  background: var(--gray-600);
+  background: var(--white);
+  border-color: var(--white);
 }
 
 .switch input:checked + .track .thumb {
   transform: translateX(1.25rem);
-  background: var(--white);
+  background: var(--gray-950);
 }
 
-/* Selector de 30 colores como radio circulares */
+/* Selector de 50 colores como radio circulares, en fila horizontal con scroll
+   (antes era una grilla fija; con 50 colores no entraban cómodos en pantalla) */
 .color-picker {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  display: flex;
   gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  padding: 0.25rem 0.15rem var(--space-sm);
+  margin-bottom: var(--space-md);
+  -webkit-overflow-scrolling: touch;
+}
+
+.color-picker label {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
 }
 
 .color-picker input {
@@ -621,7 +733,8 @@ a {
 }
 
 .color-swatch {
-  aspect-ratio: 1 / 1;
+  width: 2.4rem;
+  height: 2.4rem;
   border-radius: 50%;
   display: block;
   border: 2px solid transparent;
@@ -792,8 +905,9 @@ a {
   .home-hero h1 {
     font-size: 1.5rem;
   }
-  .color-picker {
-    grid-template-columns: repeat(5, 1fr);
+  .color-swatch {
+    width: 2.1rem;
+    height: 2.1rem;
   }
 }
 
@@ -808,4 +922,280 @@ a {
     border-radius: var(--radius-lg);
     max-height: 85dvh;
   }
+}
+
+/* --------------------------------------------------------------------------
+   11) BANNER "HOY" EN LA HOME
+   Se muestra arriba de los 3 botones solo si hoy coincide con un día especial.
+   -------------------------------------------------------------------------- */
+.today-banner {
+  display: none; /* index.js lo muestra (display:flex) solo si hoy hay algo */
+  align-items: center;
+  gap: var(--space-md);
+  background: var(--bg-surface-raised);
+  border: 1.5px solid var(--banner-accent, var(--border-strong));
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.today-banner .material-symbols-outlined {
+  color: var(--banner-accent, var(--text-secondary));
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.today-banner .banner-title {
+  font-weight: 800;
+  font-size: var(--fs-small);
+}
+
+.today-banner .banner-sub {
+  font-size: var(--fs-tiny);
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   12) TOP BAR: botón de ajustes (notificaciones) alineado a la derecha
+   -------------------------------------------------------------------------- */
+.top-bar {
+  justify-content: space-between;
+}
+
+.top-bar .top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* --------------------------------------------------------------------------
+   13) CATEGORÍAS — chips de filtro y etiqueta dentro de cada tarjeta
+   -------------------------------------------------------------------------- */
+.category-filter {
+  display: flex;
+  gap: var(--space-xs);
+  overflow-x: auto;
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
+  -webkit-overflow-scrolling: touch;
+}
+
+.category-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-round);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-raised);
+  color: var(--text-secondary);
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  transition: background var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard);
+}
+
+.category-chip .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.category-chip.is-active {
+  background: var(--white);
+  color: var(--gray-950);
+  border-color: var(--white);
+}
+
+.category-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: var(--fs-tiny);
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.category-tag .material-symbols-outlined {
+  font-size: 0.95rem;
+}
+
+/* --------------------------------------------------------------------------
+   14) MÚLTIPLES EVENTOS EL MISMO DÍA — indicador "+N" en el calendario
+   -------------------------------------------------------------------------- */
+.day-cell {
+  position: relative;
+}
+
+.day-cell .extra-count {
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: var(--day-accent, var(--text-muted));
+  line-height: 1;
+}
+
+/* --------------------------------------------------------------------------
+   15) ACCIONES DE CADA TARJETA EN fechas.html — editar / borrar / compartir
+   -------------------------------------------------------------------------- */
+.date-card-actions {
+  display: flex;
+  gap: var(--space-xs);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.card-icon-btn {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: var(--radius-round);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  transition: transform var(--dur-fast) var(--ease-standard),
+              background var(--dur-fast) var(--ease-standard);
+}
+
+.card-icon-btn .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+.card-icon-btn:active {
+  transform: scale(0.9);
+  background: var(--bg-input);
+}
+
+.card-icon-btn.is-danger:active {
+  /* Feedback de "borrar" en escala de grises (la paleta de color queda
+     reservada solo para los días especiales, no para acciones de UI) */
+  background: var(--gray-100);
+  color: var(--gray-950);
+}
+
+/* Tarjeta resaltada al llegar desde el calendario (tap en un día especial) */
+.date-card.is-highlighted {
+  animation: card-flash var(--dur-slow) var(--ease-standard) 2;
+}
+
+@keyframes card-flash {
+  0%, 100% { background: var(--bg-surface-raised); }
+  50% { background: var(--bg-surface-elevated); }
+}
+
+/* --------------------------------------------------------------------------
+   16) PALABRAS IMPORTANTES DENTRO DE LA DESCRIPCIÓN
+   Se escriben como **palabra** y se pintan con el color del día (--card-accent
+   en fechas.html, --day-accent en cualquier otro lugar que reuse el helper).
+   -------------------------------------------------------------------------- */
+.hl {
+  color: var(--card-accent, var(--text-primary));
+  font-weight: 800;
+}
+
+.date-card-description a {
+  color: var(--card-accent, var(--text-primary));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   17) CONFIRMACIÓN "¿DESCARTAR CAMBIOS?" (al cerrar el modal con texto sin guardar)
+   -------------------------------------------------------------------------- */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-scrim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: var(--space-lg);
+}
+
+.confirm-box {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  max-width: 320px;
+  width: 100%;
+}
+
+.confirm-box p {
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+.confirm-box .modal-actions .btn {
+  padding: 0.7rem 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   18) UTILIDAD: ocultar la barra de scroll visual sin perder el scroll
+   -------------------------------------------------------------------------- */
+.no-scrollbar::-webkit-scrollbar {
+  height: 0;
+}
+
+/* --------------------------------------------------------------------------
+   19) TOAST — reemplaza al alert() nativo del navegador (no se puede
+   theme-ar) para avisos cortos como "copiado al portapapeles"
+   -------------------------------------------------------------------------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-xl);
+  transform: translate(-50%, 12px);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 0.75rem 1.1rem;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-small);
+  box-shadow: var(--shadow-soft);
+  opacity: 0;
+  z-index: 80;
+  transition: opacity var(--dur-base) var(--ease-standard),
+              transform var(--dur-base) var(--ease-standard);
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* --------------------------------------------------------------------------
+   20) ACCESO RÁPIDO A FERIADOS en fechas.html
+   -------------------------------------------------------------------------- */
+.quick-access-row {
+  margin-bottom: var(--space-md);
+}
+
+.quick-access-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: 0.7rem 1rem;
+  background: var(--bg-surface-raised);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: var(--fs-small);
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.quick-access-btn:active {
+  background: var(--bg-surface-elevated);
 }

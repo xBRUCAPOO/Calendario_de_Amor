@@ -1,0 +1,10 @@
+name = "fechas-importantes"
+compatibility_date = "2026-09-01"
+pages_build_output_dir = "."
+
+# Reemplazá database_id por el que te da "wrangler d1 create" (ver BACKEND-README.md).
+# El nombre del binding tiene que ser "DB" porque las Functions usan env.DB.
+[[d1_databases]]
+binding = "DB"
+database_name = "fechas_importantes_db"
+database_id = "REEMPLAZAR_CON_TU_DATABASE_ID"
