@@ -1,0 +1,811 @@
+/* ==========================================================================
+   FECHAS IMPORTANTES — style.css
+   Hoja de estilos única compartida por index.html, calendario.html y fechas.html
+   Tema oscuro en escala de grises + acentos de color solo para días especiales.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1) VARIABLES RAÍZ
+   Todos los colores y tipografías de la app viven acá. No usar valores
+   hardcodeados en ningún otro lugar del CSS: si hace falta un color o
+   fuente nueva, se agrega una variable acá.
+   -------------------------------------------------------------------------- */
+:root {
+  /* --- Paleta base (escala de negros/grises/blancos) --- */
+  --gray-950: #0a0a0a;
+  --gray-900: #121212;
+  --gray-850: #181818;
+  --gray-800: #1f1f1f;
+  --gray-700: #2c2c2c;
+  --gray-600: #3d3d3d;
+  --gray-500: #565656;
+  --gray-400: #7a7a7a;
+  --gray-300: #a3a3a3;
+  --gray-200: #c9c9c9;
+  --gray-100: #e6e6e6;
+  --white: #f5f5f5;
+
+  /* --- Variables funcionales (las que usa el resto del CSS) --- */
+  --bg-app: var(--gray-950);
+  --bg-surface: var(--gray-900);
+  --bg-surface-raised: var(--gray-850);
+  --bg-surface-elevated: var(--gray-800);
+  --bg-input: var(--gray-800);
+
+  --border-subtle: var(--gray-700);
+  --border-strong: var(--gray-600);
+
+  --text-primary: var(--white);
+  --text-secondary: var(--gray-300);
+  --text-muted: var(--gray-400);
+  --text-disabled: var(--gray-500);
+
+  --accent-primary: var(--white);
+  --accent-primary-contrast: var(--gray-950);
+
+  --overlay-scrim: rgba(0, 0, 0, 0.6);
+
+  --shadow-soft: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --shadow-fab: 0 6px 18px rgba(0, 0, 0, 0.55);
+
+  /* --- 30 colores predeterminados para días especiales ---
+     Se usan SOLO como acento sobre días del calendario / bordes de tarjeta,
+     nunca como color de fondo o texto general de la UI. */
+  --special-color-1: #ef4444;
+  --special-color-2: #f97316;
+  --special-color-3: #f59e0b;
+  --special-color-4: #eab308;
+  --special-color-5: #84cc16;
+  --special-color-6: #22c55e;
+  --special-color-7: #10b981;
+  --special-color-8: #14b8a6;
+  --special-color-9: #06b6d4;
+  --special-color-10: #0ea5e9;
+  --special-color-11: #3b82f6;
+  --special-color-12: #6366f1;
+  --special-color-13: #8b5cf6;
+  --special-color-14: #a855f7;
+  --special-color-15: #d946ef;
+  --special-color-16: #ec4899;
+  --special-color-17: #f43f5e;
+  --special-color-18: #dc2626;
+  --special-color-19: #ea580c;
+  --special-color-20: #ca8a04;
+  --special-color-21: #65a30d;
+  --special-color-22: #16a34a;
+  --special-color-23: #0d9488;
+  --special-color-24: #0284c7;
+  --special-color-25: #4f46e5;
+  --special-color-26: #7c3aed;
+  --special-color-27: #c026d3;
+  --special-color-28: #db2777;
+  --special-color-29: #b91c1c;
+  --special-color-30: #15803d;
+
+  /* --- Tipografías (Google Fonts, cargadas desde el <link> del <head>) ---
+     Nunito: títulos, botones, UI general (redondeada, cálida, muy legible en chico).
+     DM Mono: números, fechas y contadores (look técnico, buena legibilidad de dígitos). */
+  --font-heading: 'Nunito', system-ui, sans-serif;
+  --font-mono: 'DM Mono', 'Courier New', monospace;
+
+  /* --- Tipografía en escala (mobile-first) --- */
+  --fs-display: 1.75rem;
+  --fs-title: 1.25rem;
+  --fs-body: 1rem;
+  --fs-small: 0.875rem;
+  --fs-tiny: 0.75rem;
+
+  /* --- Espaciado --- */
+  --space-xs: 0.375rem;
+  --space-sm: 0.625rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+
+  /* --- Radios --- */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-round: 999px;
+
+  /* --- Curva de animación estilo Material (fluida en Android) --- */
+  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 360ms;
+}
+
+/* --------------------------------------------------------------------------
+   2) RESET Y BASE
+   -------------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: contain;
+}
+
+h1, h2, h3, p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+input, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+/* Íconos Material Symbols: tamaño y alineado consistentes en toda la app */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: 1.25rem;
+  line-height: 1;
+  vertical-align: middle;
+  user-select: none;
+}
+
+/* Respeta la preferencia de movimiento reducido del sistema */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3) LAYOUT BASE
+   -------------------------------------------------------------------------- */
+.screen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md);
+  position: relative;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.top-bar .icon-button {
+  flex-shrink: 0;
+}
+
+.top-bar h1 {
+  font-size: var(--fs-title);
+  font-weight: 800;
+}
+
+/* Botón redondo solo-ícono (ej: volver) */
+.icon-button {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-round);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  transition: background var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-standard);
+}
+
+.icon-button:active {
+  transform: scale(0.92);
+  background: var(--bg-surface-elevated);
+}
+
+/* --------------------------------------------------------------------------
+   4) BOTONES "IMPORTANTES" — siempre [ícono] Texto
+   -------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  font-weight: 700;
+  font-size: var(--fs-body);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1.25rem;
+  transition: transform var(--dur-fast) var(--ease-standard),
+              background var(--dur-fast) var(--ease-standard),
+              opacity var(--dur-fast) var(--ease-standard);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: var(--accent-primary-contrast);
+}
+
+.btn-secondary {
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   5) PANTALLA DE INICIO — 3 botones rectangulares
+   -------------------------------------------------------------------------- */
+.home-hero {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.home-hero .material-symbols-outlined {
+  font-size: 2.5rem;
+  color: var(--text-secondary);
+}
+
+.home-hero h1 {
+  font-size: var(--fs-display);
+  font-weight: 800;
+  margin-top: var(--space-sm);
+}
+
+.home-hero p {
+  color: var(--text-muted);
+  font-size: var(--fs-small);
+  margin-top: var(--space-xs);
+}
+
+.home-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  flex: 1;
+  justify-content: center;
+}
+
+.home-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-lg) var(--space-md);
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  text-align: left;
+  transition: transform var(--dur-fast) var(--ease-standard),
+              background var(--dur-base) var(--ease-standard),
+              border-color var(--dur-base) var(--ease-standard);
+}
+
+.home-nav-btn:active {
+  transform: scale(0.98);
+  background: var(--bg-surface-elevated);
+}
+
+.home-nav-btn .icon-wrap {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.home-nav-btn .icon-wrap .material-symbols-outlined {
+  font-size: 1.6rem;
+}
+
+.home-nav-btn .label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.home-nav-btn .label-title {
+  font-weight: 800;
+  font-size: var(--fs-body);
+}
+
+.home-nav-btn .label-sub {
+  font-size: var(--fs-tiny);
+  color: var(--text-muted);
+}
+
+.home-nav-btn .chevron {
+  margin-left: auto;
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   6) CALENDARIO
+   -------------------------------------------------------------------------- */
+.calendar-header {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.calendar-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+.calendar-month-nav h2 {
+  font-size: var(--fs-display);
+  font-weight: 800;
+  min-width: 11rem;
+  text-transform: capitalize;
+}
+
+.weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+
+.weekday-row span {
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-xs);
+}
+
+.day-cell {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  transition: transform var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-base) var(--ease-standard);
+}
+
+.day-cell:active {
+  transform: scale(0.9);
+}
+
+.day-cell.is-empty {
+  border-color: transparent;
+}
+
+.day-cell.is-today {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
+/* El color de días especiales se setea inline vía JS con --day-accent
+   tomando una de las 30 variables --special-color-N */
+.day-cell.is-special {
+  border-color: var(--day-accent);
+  color: var(--day-accent);
+  font-weight: 800;
+}
+
+/* Botón flotante (FAB) — botón importante: ícono + texto */
+.fab {
+  position: fixed;
+  bottom: var(--space-lg);
+  right: max(var(--space-lg), calc((100vw - 480px) / 2 + var(--space-lg)));
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0.9rem 1.25rem;
+  background: var(--accent-primary);
+  color: var(--accent-primary-contrast);
+  border-radius: var(--radius-round);
+  font-weight: 800;
+  font-size: var(--fs-small);
+  box-shadow: var(--shadow-fab);
+  transition: transform var(--dur-fast) var(--ease-standard);
+  z-index: 20;
+}
+
+.fab:active {
+  transform: scale(0.94);
+}
+
+/* --------------------------------------------------------------------------
+   7) MODAL — Agregar día especial
+   -------------------------------------------------------------------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-scrim);
+  display: flex;
+  align-items: flex-end;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+
+.modal-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-sheet {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  max-height: 88dvh;
+  overflow-y: auto;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-lg) var(--space-md) calc(var(--space-lg) + env(safe-area-inset-bottom));
+  transform: translateY(24px);
+  transition: transform var(--dur-slow) var(--ease-decelerate);
+}
+
+.modal-overlay.is-open .modal-sheet {
+  transform: translateY(0);
+}
+
+.modal-sheet h2 {
+  font-size: var(--fs-title);
+  font-weight: 800;
+  margin-bottom: var(--space-lg);
+}
+
+.field {
+  margin-bottom: var(--space-md);
+}
+
+.field label {
+  display: block;
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+  font-weight: 700;
+  margin-bottom: var(--space-xs);
+}
+
+.field input[type="date"],
+.field input[type="text"],
+.field textarea {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  transition: border-color var(--dur-fast) var(--ease-standard);
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--text-primary);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
+.field-hint {
+  font-size: var(--fs-tiny);
+  color: var(--text-muted);
+  margin-top: var(--space-xs);
+}
+
+/* Switch "se repite cada año" */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm) 0;
+}
+
+.switch-row .switch-text strong {
+  display: block;
+  font-size: var(--fs-small);
+  font-weight: 700;
+}
+
+.switch-row .switch-text span {
+  font-size: var(--fs-tiny);
+  color: var(--text-muted);
+}
+
+.switch {
+  position: relative;
+  width: 3rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.switch .track {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-round);
+  transition: background var(--dur-base) var(--ease-standard);
+}
+
+.switch .thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  background: var(--gray-400);
+  transition: transform var(--dur-base) var(--ease-standard),
+              background var(--dur-base) var(--ease-standard);
+}
+
+.switch input:checked + .track {
+  background: var(--gray-600);
+}
+
+.switch input:checked + .track .thumb {
+  transform: translateX(1.25rem);
+  background: var(--white);
+}
+
+/* Selector de 30 colores como radio circulares */
+.color-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.color-picker input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.color-swatch {
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  display: block;
+  border: 2px solid transparent;
+  box-shadow: inset 0 0 0 2px var(--bg-surface);
+  transition: transform var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard);
+}
+
+.color-picker input:checked + .color-swatch {
+  border-color: var(--white);
+  transform: scale(1.12);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.modal-actions .btn {
+  flex: 1;
+}
+
+/* --------------------------------------------------------------------------
+   8) FECHAS — buscador + listado
+   -------------------------------------------------------------------------- */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  margin-bottom: var(--space-lg);
+}
+
+.search-bar .material-symbols-outlined {
+  color: var(--text-muted);
+}
+
+.search-bar input {
+  flex: 1;
+  background: none;
+  border: none;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.search-bar input:focus {
+  outline: none;
+}
+
+.dates-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.date-card {
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--card-accent, var(--border-strong));
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.date-card-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.date-card-day {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--card-accent, var(--text-secondary));
+  white-space: nowrap;
+}
+
+.date-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.date-card-title {
+  font-weight: 800;
+  font-size: var(--fs-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.date-card-countdown {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.date-card-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--fs-tiny);
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border-subtle);
+  width: 100%;
+}
+
+.date-card-toggle .material-symbols-outlined {
+  font-size: 1.1rem;
+  transition: transform var(--dur-base) var(--ease-standard);
+}
+
+.date-card.is-expanded .date-card-toggle .material-symbols-outlined {
+  transform: rotate(180deg);
+}
+
+.date-card-description {
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height var(--dur-slow) var(--ease-standard),
+              opacity var(--dur-base) var(--ease-standard);
+}
+
+.date-card.is-expanded .date-card-description {
+  max-height: 20rem;
+  opacity: 1;
+  margin-top: var(--space-sm);
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: var(--space-xl) var(--space-md);
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   9) FOOTER (versión + fecha, solo en index.html)
+   -------------------------------------------------------------------------- */
+.app-footer {
+  text-align: center;
+  margin-top: var(--space-xl);
+  font-family: var(--font-mono);
+  font-size: var(--fs-tiny);
+  color: var(--text-disabled);
+}
+
+/* --------------------------------------------------------------------------
+   10) RESPONSIVE
+   Referencia principal: Motorola G72 (~393px de ancho CSS, ~851px de alto).
+   El layout ya es mobile-first (max-width 480px centrado); estos ajustes
+   afinan pantallas más angostas (<360px) y pantallas más anchas (tablet/desktop).
+   -------------------------------------------------------------------------- */
+@media (max-width: 359px) {
+  .screen {
+    padding: var(--space-md) var(--space-sm);
+  }
+  .home-hero h1 {
+    font-size: 1.5rem;
+  }
+  .color-picker {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (min-width: 480px) {
+  .screen {
+    padding: var(--space-xl) var(--space-lg);
+  }
+  .modal-overlay {
+    align-items: center;
+  }
+  .modal-sheet {
+    border-radius: var(--radius-lg);
+    max-height: 85dvh;
+  }
+}
