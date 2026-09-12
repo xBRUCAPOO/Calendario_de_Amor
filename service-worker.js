@@ -43,27 +43,14 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.pathname.startsWith('/api/')) return; // ver nota arriba
 
-  // Las navegaciones (cargar una página HTML completa al clickear un link)
-  // se piden por URL en texto, NO reenviando el objeto Request original:
-  // los Request de navegación tienen el modo "redirect" fijado en "manual"
-  // de forma permanente (no se puede cambiar con { redirect: 'follow' },
-  // eso NO alcanza). Cloudflare Pages redirige "*.html" a la versión sin
-  // extensión, y con el Request original eso rompía con "a redirected
-  // response was used for a request whose redirect mode is not follow".
-  // Pidiendo por URL, fetch() arma un Request nuevo con "follow" (el
-  // default) y no hay conflicto.
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request.url).catch(() =>
-        caches.match(event.request).then((cached) => cached || caches.match('/index.html'))
-      )
-    );
-    return;
-  }
-
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      const network = fetch(event.request).then((response) => {
+      // OJO: hay que pasar { redirect: 'follow' } explícito. Cloudflare Pages
+      // redirige las URLs "*.html" a su versión sin extensión, y sin esto
+      // Chrome corta la conexión con "a redirected response was used for a
+      // request whose redirect mode is not follow" (bug clásico de Service
+      // Workers con fetch(event.request) en navegaciones).
+      const network = fetch(event.request, { redirect: 'follow' }).then((response) => {
         if (response && response.ok) {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
         }
