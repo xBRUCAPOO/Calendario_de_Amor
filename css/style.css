@@ -150,6 +150,32 @@ html, body {
   height: 100%;
 }
 
+/* Barras de scroll con la temática de la app (Chrome/Android y Firefox).
+   Las horizontales marcadas ".no-scrollbar" (filtro de categorías, selector
+   de color) siguen ocultas: esa regla, al ser más específica, gana. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-600) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gray-600);
+  border-radius: var(--radius-round);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
+}
+
 body {
   margin: 0;
   background: var(--bg-app);
@@ -505,6 +531,9 @@ a {
   position: fixed;
   inset: 0;
   background: var(--overlay-scrim);
+  /* Difumina lo que queda atrás del modal para que se note que está encima */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: flex-end;
   z-index: 50;
@@ -525,10 +554,12 @@ a {
   max-height: 88dvh;
   overflow-y: auto;
   background: var(--bg-surface);
+  border: 2px solid var(--card-accent, var(--border-subtle));
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   padding: var(--space-lg) var(--space-md) calc(var(--space-lg) + env(safe-area-inset-bottom));
   transform: translateY(24px);
-  transition: transform var(--dur-slow) var(--ease-decelerate);
+  transition: transform var(--dur-slow) var(--ease-decelerate),
+              border-color var(--dur-fast) var(--ease-standard);
 }
 
 .modal-overlay.is-open .modal-sheet {
@@ -799,6 +830,7 @@ a {
   border-left: 4px solid var(--card-accent, var(--border-strong));
   border-radius: var(--radius-md);
   padding: var(--space-md);
+  cursor: pointer;
   transition: transform var(--dur-fast) var(--ease-standard);
 }
 
@@ -977,8 +1009,8 @@ a {
   display: flex;
   gap: var(--space-xs);
   overflow-x: auto;
-  padding-bottom: var(--space-sm);
-  margin-bottom: var(--space-md);
+  padding-bottom: 0;
+  margin-bottom: 0;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -1113,6 +1145,8 @@ a {
   position: fixed;
   inset: 0;
   background: var(--overlay-scrim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1142,8 +1176,15 @@ a {
 /* --------------------------------------------------------------------------
    18) UTILIDAD: ocultar la barra de scroll visual sin perder el scroll
    -------------------------------------------------------------------------- */
+/* Utilidad: ocultar la barra de scroll visual sin perder el scroll.
+   Se cubren los 3 métodos (antes solo tapaba Chrome/Android; en Windows con
+   scrollbars clásicas, o en Firefox, seguía viéndose la barra completa). */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Edge/IE viejo */
+}
 .no-scrollbar::-webkit-scrollbar {
-  height: 0;
+  display: none; /* Chrome, Safari, Android */
 }
 
 /* --------------------------------------------------------------------------
@@ -1174,30 +1215,21 @@ a {
 }
 
 /* --------------------------------------------------------------------------
-   20) ACCESO RÁPIDO A FERIADOS en fechas.html
+   20) SWITCH "Días importantes" / "Feriados" en fechas.html
    -------------------------------------------------------------------------- */
-.quick-access-row {
-  margin-bottom: var(--space-md);
-}
-
-.quick-access-btn {
-  width: 100%;
+.mode-toggle-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-xs);
-  padding: 0.7rem 1rem;
-  background: var(--bg-surface-raised);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-weight: 700;
-  font-size: var(--fs-small);
-  transition: background var(--dur-fast) var(--ease-standard);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
 }
 
-.quick-access-btn:active {
-  background: var(--bg-surface-elevated);
+.mode-toggle-label {
+  font-size: var(--fs-small);
+  font-weight: 700;
+  color: var(--text-secondary);
+  transition: opacity var(--dur-base) var(--ease-standard);
 }
 
 /* --------------------------------------------------------------------------
@@ -1214,13 +1246,78 @@ a {
   z-index: 15;
   background: var(--bg-app);
   margin: calc(-1 * var(--space-lg)) calc(-1 * var(--space-md)) 0;
-  padding: var(--space-lg) var(--space-md) var(--space-sm);
+  padding: var(--space-lg) var(--space-md) var(--space-xs);
   border-bottom: 1px solid var(--border-subtle);
 }
 
 @media (min-width: 480px) {
   .fechas-sticky-header {
     margin: calc(-1 * var(--space-xl)) calc(-1 * var(--space-lg)) 0;
-    padding: var(--space-xl) var(--space-lg) var(--space-sm);
+    padding: var(--space-xl) var(--space-lg) var(--space-xs);
   }
+}
+
+.dates-list {
+  margin-top: var(--space-md);
+}
+
+/* --------------------------------------------------------------------------
+   22) MENÚ FLOTANTE DE DETALLE (al tocar una fecha en la lista)
+   -------------------------------------------------------------------------- */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.detail-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--card-accent, var(--text-secondary));
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.detail-header h2 {
+  font-size: var(--fs-title);
+  font-weight: 800;
+}
+
+.detail-sub {
+  font-size: var(--fs-tiny);
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.detail-countdown {
+  font-family: var(--font-mono);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--card-accent, var(--text-primary));
+  margin-bottom: var(--space-md);
+}
+
+.detail-description {
+  font-size: var(--fs-small);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-lg);
+}
+
+.detail-description a {
+  color: var(--card-accent, var(--text-primary));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Más separación entre el par de botones grises (Compartir/Editar) y el
+   botón blanco de Cerrar, que antes quedaban casi pegados */
+#detailCloseBtn {
+  margin-top: var(--space-md);
 }

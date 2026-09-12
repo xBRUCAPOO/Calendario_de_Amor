@@ -1,9 +1,10 @@
 /* ==========================================================================
    FECHAS IMPORTANTES — js/fechas.js
-   Lista todos los días especiales guardados (los más próximos primero),
-   permite buscar por nombre, filtrar por categoría (con un acceso directo a
-   "Feriados"), editar/borrar/compartir cada uno, y desplegar su descripción
-   (con links y palabras resaltadas).
+   Lista los días especiales guardados (los más próximos primero), separados
+   con un switch entre "Días importantes" (todo menos feriados) y "Feriados".
+   Permite buscar por nombre, filtrar por categoría (solo en modo días
+   importantes), editar/borrar/compartir cada uno, ver un detalle completo en
+   un menú flotante al tocar la tarjeta, y desplegar su descripción.
 
    Si se llega desde el calendario (?day=D&month=M), se resalta la tarjeta,
    se abre su descripción sola y vibra el celular para que quede clarísimo
@@ -15,27 +16,38 @@
   const listEl = document.getElementById('datesList');
   const searchInput = document.getElementById('searchInput');
   const categoryFilterEl = document.getElementById('categoryFilter');
+  const showHolidaysSwitch = document.getElementById('showHolidaysSwitch');
+  const modeLabelDates = document.getElementById('modeLabelDates');
+  const modeLabelHolidays = document.getElementById('modeLabelHolidays');
   const params = new URLSearchParams(window.location.search);
   const highlightDay = params.get('day') ? Number(params.get('day')) : null;
   const highlightMonth = params.get('month') ? Number(params.get('month')) : null;
 
   let activeCategory = 'todas';
+  // Controla que el menú flotante de "llegada desde el calendario" se abra
+  // una sola vez, no cada vez que la lista se vuelve a pintar
+  let arrivalModalShown = false;
 
   document.getElementById('backBtn').addEventListener('click', () => {
     const cameFromCalendar = document.referrer && document.referrer.includes('calendario.html');
     window.location.href = cameFromCalendar ? 'calendario.html' : '../index.html';
   });
 
-  // Acceso directo: salta al filtro de feriados de un toque
-  document.getElementById('quickHolidaysBtn').addEventListener('click', () => {
-    activeCategory = 'feriado';
-    renderCategoryFilter();
+  // Switch "Días importantes" / "Feriados": son dos vistas separadas, no se
+  // mezclan. Con feriados activo, el filtro de categoría no aplica (se oculta).
+  showHolidaysSwitch.addEventListener('change', () => {
+    const showingHolidays = showHolidaysSwitch.checked;
+    modeLabelDates.style.opacity = showingHolidays ? '0.5' : '1';
+    modeLabelHolidays.style.opacity = showingHolidays ? '1' : '0.5';
+    categoryFilterEl.style.display = showingHolidays ? 'none' : 'flex';
     renderList(searchInput.value);
-    listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
+  modeLabelDates.style.opacity = '1';
+  modeLabelHolidays.style.opacity = '0.5';
 
   function renderCategoryFilter() {
-    const chips = [{ id: 'todas', label: 'Todas', icon: 'apps' }, ...CATEGORIES];
+    // El chip "Feriado" no aparece acá: ese modo ya lo maneja el switch de arriba
+    const chips = [{ id: 'todas', label: 'Todas', icon: 'apps' }, ...CATEGORIES.filter((c) => c.id !== 'feriado')];
     categoryFilterEl.innerHTML = chips.map((c) => `
       <button type="button" class="category-chip ${c.id === activeCategory ? 'is-active' : ''}" data-category="${c.id}">
         <span class="material-symbols-outlined">${c.icon}</span> ${c.label}
@@ -60,12 +72,19 @@
 
   async function renderList(filterText) {
     const query = (filterText || '').trim().toLowerCase();
+    const showingHolidays = showHolidaysSwitch.checked;
     let rows = await getSortedDays();
     rows = rows.filter(({ item }) => item.name.toLowerCase().includes(query));
-    if (activeCategory !== 'todas') rows = rows.filter(({ item }) => item.category === activeCategory);
+
+    if (showingHolidays) {
+      rows = rows.filter(({ item }) => item.category === 'feriado');
+    } else {
+      rows = rows.filter(({ item }) => item.category !== 'feriado');
+      if (activeCategory !== 'todas') rows = rows.filter(({ item }) => item.category === activeCategory);
+    }
 
     if (rows.length === 0) {
-      listEl.innerHTML = `<p class="empty-state">No hay días que coincidan con la búsqueda.</p>`;
+      listEl.innerHTML = `<p class="empty-state">${showingHolidays ? 'No hay feriados guardados.' : 'No hay días que coincidan con la búsqueda.'}</p>`;
       return;
     }
 
@@ -102,28 +121,32 @@
     `;
     }).join('');
 
-    listEl.querySelectorAll('[data-toggle]').forEach((btn) => {
-      btn.addEventListener('click', () => btn.closest('.date-card').classList.toggle('is-expanded'));
-    });
+    function findItem(card) {
+      return rows.find((r) => r.item.id === card.dataset.id).item;
+    }
 
-    listEl.querySelectorAll('[data-action="share"]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const item = rows.find((r) => r.item.id === btn.closest('.date-card').dataset.id).item;
-        shareSpecialDay(item);
+    listEl.querySelectorAll('[data-toggle]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        btn.closest('.date-card').classList.toggle('is-expanded');
       });
     });
 
+    listEl.querySelectorAll('[data-action="share"]').forEach((btn) => {
+      btn.addEventListener('click', (e) => { e.stopPropagation(); shareSpecialDay(findItem(btn.closest('.date-card'))); });
+    });
+
     listEl.querySelectorAll('[data-action="edit"]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const item = rows.find((r) => r.item.id === btn.closest('.date-card').dataset.id).item;
-        openDayModal(item, () => renderList(searchInput.value), () => renderList(searchInput.value));
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openDayModal(findItem(btn.closest('.date-card')), () => renderList(searchInput.value), () => renderList(searchInput.value));
       });
     });
 
     listEl.querySelectorAll('[data-action="delete"]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const card = btn.closest('.date-card');
-        const item = rows.find((r) => r.item.id === card.dataset.id).item;
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const item = findItem(btn.closest('.date-card'));
         const ok = await showConfirmDialog({
           message: `¿Borrar "${item.name}"? Esta acción no se puede deshacer.`,
           confirmLabel: 'Borrar',
@@ -134,14 +157,33 @@
       });
     });
 
+    // Tocar la tarjeta (fuera de los botones de arriba) abre el menú
+    // flotante con toda la información de esa fecha.
+    listEl.querySelectorAll('.date-card').forEach((card) => {
+      card.addEventListener('click', () => {
+        showDayDetailModal(findItem(card), {
+          onSaved: () => renderList(searchInput.value),
+          onDeleted: () => renderList(searchInput.value),
+        });
+      });
+    });
+
     // Si llegamos desde el calendario con un día puntual: resaltamos la
-    // tarjeta, abrimos su descripción sola y vibramos para que se note.
+    // tarjeta y, solo la primera vez (no en cada re-render posterior),
+    // abrimos el menú flotante con el detalle completo y vibramos.
     if (highlightDay && highlightMonth) {
       const target = listEl.querySelector(`.date-card[data-day="${highlightDay}"][data-month="${highlightMonth}"]`);
       if (target) {
-        target.classList.add('is-highlighted', 'is-expanded');
+        target.classList.add('is-highlighted');
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        if (navigator.vibrate) navigator.vibrate(200);
+        if (!arrivalModalShown) {
+          arrivalModalShown = true;
+          if (navigator.vibrate) navigator.vibrate(200);
+          showDayDetailModal(findItem(target), {
+            onSaved: () => renderList(searchInput.value),
+            onDeleted: () => renderList(searchInput.value),
+          });
+        }
       }
     }
   }

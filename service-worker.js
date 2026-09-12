@@ -8,18 +8,18 @@
      Sync (donde el navegador lo soporte).
    ========================================================================== */
 
-const CACHE_NAME = 'fechas-importantes-v4';
+const CACHE_NAME = 'fechas-importantes-v8';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/pages/calendario.html',
   '/pages/fechas.html',
-  '/css/style.css?v=4',
-  '/js/common.js?v=4',
-  '/js/notifications.js?v=4',
-  '/js/index.js?v=4',
-  '/js/calendario.js?v=4',
-  '/js/fechas.js?v=4',
+  '/css/style.css?v=8',
+  '/js/common.js?v=8',
+  '/js/notifications.js?v=8',
+  '/js/index.js?v=8',
+  '/js/calendario.js?v=8',
+  '/js/fechas.js?v=8',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',

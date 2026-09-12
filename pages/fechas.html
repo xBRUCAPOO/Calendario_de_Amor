@@ -13,7 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
 
-  <link rel="stylesheet" href="../css/style.css?v=4">
+  <link rel="stylesheet" href="../css/style.css?v=8">
 </head>
 <body>
   <div class="screen">
@@ -32,21 +32,24 @@
         <input type="text" id="searchInput" placeholder="Buscar por nombre...">
       </div>
 
-      <!-- Botón importante: acceso directo a los feriados -->
-      <div class="quick-access-row">
-        <button type="button" class="quick-access-btn" id="quickHolidaysBtn">
-          <span class="material-symbols-outlined">flag</span> Ver feriados
-        </button>
+      <!-- Botón que prende/apaga: alterna entre "días importantes" y "feriados" -->
+      <div class="mode-toggle-row">
+        <span class="mode-toggle-label" id="modeLabelDates">Días importantes</span>
+        <label class="switch">
+          <input type="checkbox" id="showHolidaysSwitch">
+          <span class="track"><span class="thumb"></span></span>
+        </label>
+        <span class="mode-toggle-label" id="modeLabelHolidays">Feriados</span>
       </div>
 
-      <!-- Filtro por categoría: se completa desde fechas.js con CATEGORIES (common.js) -->
+      <!-- Filtro por categoría (no incluye "Feriado": ese modo lo maneja el switch de arriba) -->
       <div class="category-filter no-scrollbar" id="categoryFilter"></div>
     </div>
 
     <div class="dates-list" id="datesList"></div>
   </div>
 
-  <script src="../js/common.js?v=4"></script>
-  <script src="../js/fechas.js?v=4"></script>
+  <script src="../js/common.js?v=8"></script>
+  <script src="../js/fechas.js?v=8"></script>
 </body>
 </html>

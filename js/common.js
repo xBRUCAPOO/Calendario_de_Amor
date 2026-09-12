@@ -391,6 +391,64 @@ function showToast(message) {
 }
 
 /* --------------------------------------------------------------------------
+   MENÚ FLOTANTE DE DETALLE — al tocar una fecha en la lista, muestra toda
+   su información (nombre, fecha completa, cuenta regresiva, categoría y
+   descripción) con accesos directos a compartir/editar.
+   -------------------------------------------------------------------------- */
+
+function buildDayDetailHTML(item) {
+  const cat = getCategoryMeta(item.category);
+  const countdown = getCountdownInfo(item);
+  const fullDate = (!item.recurring && item.year)
+    ? `${formatDayMonth(item.day, item.month)} de ${item.year}`
+    : `${formatDayMonth(item.day, item.month)} (todos los años)`;
+
+  return `
+    <div class="modal-overlay" id="dayDetailOverlay">
+      <div class="modal-sheet" style="--card-accent: ${getAccentColorVar(item)};">
+        <div class="detail-header">
+          <span class="material-symbols-outlined detail-icon">${cat.icon}</span>
+          <div>
+            <h2>${escapeHTML(item.name)}</h2>
+            <p class="detail-sub">${fullDate} · ${cat.label}</p>
+          </div>
+        </div>
+        <p class="detail-countdown">${countdown.label}</p>
+        ${item.description ? `<p class="detail-description">${parseDescription(item.description)}</p>` : ''}
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="detailShareBtn">
+            <span class="material-symbols-outlined">share</span> Compartir
+          </button>
+          <button type="button" class="btn btn-secondary" id="detailEditBtn">
+            <span class="material-symbols-outlined">edit</span> Editar
+          </button>
+        </div>
+        <button type="button" class="btn btn-primary btn-block" id="detailCloseBtn">
+          <span class="material-symbols-outlined">close</span> Cerrar
+        </button>
+      </div>
+    </div>`;
+}
+
+function showDayDetailModal(item, callbacks) {
+  const opts = callbacks || {};
+  const mount = document.createElement('div');
+  mount.innerHTML = buildDayDetailHTML(item);
+  const overlay = mount.firstElementChild;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('is-open'));
+
+  function close() { overlay.remove(); }
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector('#detailCloseBtn').addEventListener('click', close);
+  overlay.querySelector('#detailShareBtn').addEventListener('click', () => shareSpecialDay(item));
+  overlay.querySelector('#detailEditBtn').addEventListener('click', () => {
+    close();
+    openDayModal(item, opts.onSaved, opts.onDeleted);
+  });
+}
+
+/* --------------------------------------------------------------------------
    MODAL COMPARTIDO — Agregar / Editar día especial
    -------------------------------------------------------------------------- */
 
@@ -421,9 +479,10 @@ function toDateInputValue(item) {
 
 function buildDayModalHTML(item) {
   const isEdit = !!item;
+  const initialAccent = isEdit ? getAccentColorVar(item) : 'var(--special-color-1)';
   return `
     <div class="modal-overlay" id="dayModalOverlay">
-      <div class="modal-sheet">
+      <div class="modal-sheet" id="dayModalSheet" style="--card-accent: ${initialAccent};">
         <h2>${isEdit ? 'Editar día especial' : 'Agregar día especial'}</h2>
         <form id="dayForm">
           <div class="switch-row">
@@ -499,6 +558,7 @@ function openDayModal(item, onSaved, onDeleted) {
   document.body.appendChild(overlay);
 
   const form = overlay.querySelector('#dayForm');
+  const modalSheet = overlay.querySelector('#dayModalSheet');
   const yearMattersSwitch = overlay.querySelector('#yearMattersSwitch');
   const dayDateHint = overlay.querySelector('#dayDateHint');
   const initialSnapshot = new FormData(form);
@@ -520,9 +580,23 @@ function openDayModal(item, onSaved, onDeleted) {
     const isFeriado = categorySelect.value === 'feriado';
     colorField.style.display = isFeriado ? 'none' : '';
     feriadoColorHint.style.display = isFeriado ? '' : 'none';
+    if (isFeriado) {
+      modalSheet.style.setProperty('--card-accent', 'var(--gray-300)');
+    } else {
+      const checkedRadio = form.querySelector('input[name="colorIndex"]:checked');
+      if (checkedRadio) modalSheet.style.setProperty('--card-accent', `var(--special-color-${checkedRadio.value})`);
+    }
   }
   categorySelect.addEventListener('change', updateColorFieldVisibility);
   updateColorFieldVisibility();
+
+  // El contorno del modal (--card-accent) sigue en vivo al color que se
+  // va eligiendo, para que se note de un vistazo cómo va a quedar el día.
+  form.querySelectorAll('input[name="colorIndex"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      modalSheet.style.setProperty('--card-accent', `var(--special-color-${radio.value})`);
+    });
+  });
 
   function isDirty() {
     const current = new FormData(form);
