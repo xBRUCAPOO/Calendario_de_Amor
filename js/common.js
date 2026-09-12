@@ -164,6 +164,20 @@ function buildCoupleSeedDays() {
   ];
 }
 
+// Sube TODOS los días predefinidos (feriados + fechas de pareja) al backend
+// (D1), uno por uno. Pensada para correrse una sola vez a mano cuando ya
+// tenés el backend conectado y querés los mismos días de ejemplo que
+// aparecen en modo offline. Se puede correr desde la consola del navegador:
+// seedBackendDefaults().then(r => console.log('cargados:', r.length));
+async function seedBackendDefaults() {
+  const defaults = [...buildHolidaySeedDays(), ...buildCoupleSeedDays()];
+  const created = [];
+  for (const day of defaults) {
+    created.push(await addSpecialDay(day));
+  }
+  return created;
+}
+
 /* --------------------------------------------------------------------------
    API — llamadas al backend (Cloudflare Pages Functions + D1)
    Si el fetch falla (sin conexión, backend caído o todavía no desplegado),
@@ -341,13 +355,16 @@ async function shareSpecialDay(item) {
 }
 
 /* --------------------------------------------------------------------------
-   SERVICE WORKER (PWA offline) — ruta absoluta para que el SW controle
-   todo el sitio sin importar desde qué carpeta se registre
+   SERVICE WORKER (PWA offline) — DESACTIVADO TEMPORALMENTE
+   Estaba rompiendo la navegación entre páginas por un bug de Chrome con
+   Service Workers + las redirecciones automáticas que hace Cloudflare Pages
+   en URLs *.html. Se puede reactivar más adelante con más tiempo para
+   probarlo bien; mientras tanto, sin esta línea la app funciona igual,
+   solo que sin caché offline ni "agregar a pantalla de inicio" como PWA.
    -------------------------------------------------------------------------- */
-
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js', { scope: '/' }).catch(() => {});
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    regs.forEach((reg) => reg.unregister());
   });
 }
 
