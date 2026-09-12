@@ -8,7 +8,7 @@
      Sync (donde el navegador lo soporte).
    ========================================================================== */
 
-const CACHE_NAME = 'fechas-importantes-v8';
+const CACHE_NAME = 'fechas-importantes-v9';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -45,7 +45,12 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      const network = fetch(event.request).then((response) => {
+      // OJO: hay que pasar { redirect: 'follow' } explícito. Cloudflare Pages
+      // redirige las URLs "*.html" a su versión sin extensión, y sin esto
+      // Chrome corta la conexión con "a redirected response was used for a
+      // request whose redirect mode is not follow" (bug clásico de Service
+      // Workers con fetch(event.request) en navegaciones).
+      const network = fetch(event.request, { redirect: 'follow' }).then((response) => {
         if (response && response.ok) {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
         }
