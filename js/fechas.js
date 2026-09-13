@@ -45,6 +45,16 @@
   modeLabelDates.style.opacity = '1';
   modeLabelHolidays.style.opacity = '0.5';
 
+  // FIX: pone el switch en modo "Feriados" (y ajusta las etiquetas/el filtro
+  // de categoría) sin disparar el evento "change", para usarlo antes del
+  // primer renderizado cuando la tarjeta de destino es un feriado.
+  function activateHolidaysMode() {
+    showHolidaysSwitch.checked = true;
+    modeLabelDates.style.opacity = '0.5';
+    modeLabelHolidays.style.opacity = '1';
+    categoryFilterEl.style.display = 'none';
+  }
+
   function renderCategoryFilter() {
     // El chip "Feriado" no aparece acá: ese modo ya lo maneja el switch de arriba
     const chips = [{ id: 'todas', label: 'Todas', icon: 'apps' }, ...CATEGORIES.filter((c) => c.id !== 'feriado')];
@@ -194,7 +204,24 @@
     return div.innerHTML;
   }
 
+  // FIX: antes de pintar la lista por primera vez, si venimos desde el
+  // calendario apuntando a un día que es feriado, activamos el switch
+  // "Feriados" automáticamente. Antes quedaba en modo "Días importantes"
+  // por defecto y el feriado quedaba filtrado afuera, así que la tarjeta
+  // nunca se mostraba (ni el resaltado, ni el menú flotante, ni la vibración)
+  // hasta que el usuario tocaba el switch a mano.
+  async function initView() {
+    if (highlightDay && highlightMonth) {
+      const allDays = await getSpecialDays();
+      const targetItem = allDays.find((it) => it.day === highlightDay && it.month === highlightMonth);
+      if (targetItem && targetItem.category === 'feriado') {
+        activateHolidaysMode();
+      }
+    }
+    renderCategoryFilter();
+    renderList('');
+  }
+
   searchInput.addEventListener('input', () => renderList(searchInput.value));
-  renderCategoryFilter();
-  renderList('');
+  initView();
 })();
