@@ -1,0 +1,53 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/days/:id",
+      "mountPath": "/api/days",
+      "method": "DELETE",
+      "module": [
+        "api/days/[id].js:onRequestDelete"
+      ]
+    },
+    {
+      "routePath": "/api/days/:id",
+      "mountPath": "/api/days",
+      "method": "PUT",
+      "module": [
+        "api/days/[id].js:onRequestPut"
+      ]
+    },
+    {
+      "routePath": "/api/days/days-:id",
+      "mountPath": "/api/days",
+      "method": "DELETE",
+      "module": [
+        "api/days/days-[id].js:onRequestDelete"
+      ]
+    },
+    {
+      "routePath": "/api/days/days-:id",
+      "mountPath": "/api/days",
+      "method": "PUT",
+      "module": [
+        "api/days/days-[id].js:onRequestPut"
+      ]
+    },
+    {
+      "routePath": "/api/days",
+      "mountPath": "/api",
+      "method": "GET",
+      "module": [
+        "api/days.js:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/days",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/days.js:onRequestPost"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}

@@ -453,6 +453,26 @@ a {
   gap: var(--space-xs);
 }
 
+/* NUEVO: animación al cambiar de mes con las flechas. El título del mes y
+   la grilla de días entran deslizándose desde el costado correspondiente
+   (derecha si se avanza al mes siguiente, izquierda si se retrocede) en vez
+   de aparecer de golpe. calendario.js agrega/saca estas clases en cada
+   cambio de mes. */
+@keyframes calendar-slide-in-right {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes calendar-slide-in-left {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.calendar-anim-next {
+  animation: calendar-slide-in-right var(--dur-slow) var(--ease-decelerate);
+}
+.calendar-anim-prev {
+  animation: calendar-slide-in-left var(--dur-slow) var(--ease-decelerate);
+}
+
 .day-cell {
   aspect-ratio: 1 / 1;
   display: flex;
@@ -1349,4 +1369,51 @@ a {
    botón blanco de Cerrar, que antes quedaban casi pegados */
 #detailCloseBtn {
   margin-top: var(--space-md);
+}
+
+/* --------------------------------------------------------------------------
+   23) VISOR DE "HISTORIAS" — cuando un día del calendario tiene varios días
+   especiales cargados, se muestran de a uno estilo TikTok/Instagram: una
+   fila de círculos arriba (uno por día) marca en cuál estás parado, y se
+   desliza horizontalmente (con el dedo) para pasar de un día al siguiente.
+   -------------------------------------------------------------------------- */
+
+/* Fila de círculos indicadores, uno por cada día especial de la fecha */
+.story-dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.story-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-round);
+  background: var(--border-strong);
+  flex-shrink: 0;
+  transition: background var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-standard);
+}
+
+/* El círculo del día que se está viendo se agranda y toma su color propio */
+.story-dot.is-active {
+  background: var(--card-accent, var(--text-primary));
+  transform: scale(1.35);
+}
+
+/* Contenedor con "ventana" fija: adentro los días se acomodan en fila y se
+   corren con transform para el efecto de deslizamiento horizontal */
+.story-track {
+  display: flex;
+  overflow: hidden;
+  /* Le avisa al navegador que el gesto horizontal lo manejamos por JS,
+     dejando el scroll vertical de la página sin interferencias */
+  touch-action: pan-y;
+}
+
+.story-slide {
+  flex: 0 0 100%;
+  min-width: 100%;
+  box-sizing: border-box;
 }

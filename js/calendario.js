@@ -29,7 +29,10 @@
   // Fila de iniciales de los días de la semana (empezando en lunes)
   weekdayRow.innerHTML = DIAS_SEMANA.map((d) => `<span>${d}</span>`).join('');
 
-  async function renderCalendar() {
+  // NUEVO: "direction" indica hacia dónde se navegó ('next' | 'prev') para
+  // animar la entrada del mes deslizándose desde el costado correspondiente.
+  // Sin direction (ej. la primera carga de la página) no anima, solo pinta.
+  async function renderCalendar(direction) {
     monthLabel.textContent = `${MESES[viewMonth]} ${viewYear}`;
     saveViewState();
 
@@ -105,7 +108,23 @@
     }
     grid.innerHTML = html;
 
-    // Tocar un día con evento(s) te lleva directo a su tarjeta en fechas.html
+    // NUEVO: dispara la animación de deslizamiento del título del mes y de
+    // la grilla (definida en css/style.css). Se saca y se vuelve a poner la
+    // clase (con un reflow forzado en el medio) para que se pueda repetir
+    // aunque se cambie de mes varias veces seguidas.
+    if (direction) {
+      const animClass = direction === 'next' ? 'calendar-anim-next' : 'calendar-anim-prev';
+      [monthLabel, grid].forEach((el) => {
+        el.classList.remove('calendar-anim-next', 'calendar-anim-prev');
+        void el.offsetWidth; // fuerza el reflow para poder re-disparar la animación
+        el.classList.add(animClass);
+      });
+    }
+
+    // Tocar un día con evento(s) te lleva a su tarjeta en fechas.html (como
+    // antes). Si esa fecha tiene VARIOS días especiales, es fechas.html el
+    // que, al llegar, decide mostrar el visor de "historias" en vez del
+    // detalle de uno solo (ver js/fechas.js).
     grid.querySelectorAll('.day-cell.is-special').forEach((cell) => {
       cell.addEventListener('click', () => {
         const day = Number(cell.dataset.day);
@@ -118,13 +137,13 @@
   document.getElementById('prevMonth').addEventListener('click', () => {
     viewMonth -= 1;
     if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
-    renderCalendar();
+    renderCalendar('prev');
   });
 
   document.getElementById('nextMonth').addEventListener('click', () => {
     viewMonth += 1;
     if (viewMonth > 11) { viewMonth = 0; viewYear += 1; }
-    renderCalendar();
+    renderCalendar('next');
   });
 
   renderCalendar();

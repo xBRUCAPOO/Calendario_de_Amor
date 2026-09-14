@@ -6,10 +6,14 @@
    importantes), editar/borrar/compartir cada uno, ver un detalle completo en
    un menú flotante al tocar la tarjeta, y desplegar su descripción.
 
-   Si se llega desde el calendario (?day=D&month=M), se resalta la tarjeta,
-   se abre su descripción sola y vibra el celular para que quede clarísimo
-   cuál es. El botón "volver" respeta de dónde vino: si fue desde el
-   calendario, vuelve ahí (que a su vez recuerda el mes que se estaba viendo).
+   Si se llega desde el calendario (?day=D&month=M), se resaltan la(s)
+   tarjeta(s) que caen en esa fecha, se abre su detalle solo y vibra el
+   celular para que quede clarísimo cuál es. Si esa fecha tiene VARIOS días
+   especiales cargados, en vez del detalle de uno solo se abre el visor de
+   "historias" (círculos arriba + deslizamiento horizontal entre días,
+   definido en common.js como showDayGroupModal). El botón "volver" respeta
+   de dónde vino: si fue desde el calendario, vuelve ahí (que a su vez
+   recuerda el mes que se estaba viendo).
    ========================================================================== */
 
 (function () {
@@ -194,26 +198,42 @@
       });
     });
 
-    // Si llegamos desde el calendario con un día puntual: resaltamos la
-    // tarjeta y, solo la primera vez (no en cada re-render posterior),
-    // abrimos el menú flotante con el detalle completo y vibramos.
-    // NUEVO: la búsqueda ahora usa matchesHighlightedDate() y el data-id de
-    // la tarjeta (antes usaba data-day/data-month exactos), para que también
-    // funcione si el día tocado en el calendario es parte de un rango de
-    // varias fechas (ej. cualquier día de la Semana de la Dulzura).
+    // Si llegamos desde el calendario con un día puntual: resaltamos la(s)
+    // tarjeta(s) y, solo la primera vez (no en cada re-render posterior),
+    // abrimos el detalle. NUEVO: si esa fecha tiene VARIOS días especiales
+    // (ej. un cumpleaños y un aniversario el mismo día), en vez del detalle
+    // de uno solo se abre el visor de "historias" (círculos arriba +
+    // deslizamiento horizontal) con todos ellos.
+    // La búsqueda usa matchesHighlightedDate() y el data-id de la tarjeta
+    // (antes usaba data-day/data-month exactos), para que también funcione
+    // si el día tocado en el calendario es parte de un rango de varias
+    // fechas (ej. cualquier día de la Semana de la Dulzura).
     if (highlightDay && highlightMonth) {
-      const matched = rows.find(({ item }) => matchesHighlightedDate(item, highlightDay, highlightMonth));
-      const target = matched ? listEl.querySelector(`.date-card[data-id="${matched.item.id}"]`) : null;
-      if (target) {
-        target.classList.add('is-highlighted');
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const matchedRows = rows.filter(({ item }) => matchesHighlightedDate(item, highlightDay, highlightMonth));
+      if (matchedRows.length > 0) {
+        // Resaltamos TODAS las tarjetas que caen en esa fecha, no solo la primera
+        matchedRows.forEach(({ item }) => {
+          const card = listEl.querySelector(`.date-card[data-id="${item.id}"]`);
+          if (card) card.classList.add('is-highlighted');
+        });
+        const firstCard = listEl.querySelector(`.date-card[data-id="${matchedRows[0].item.id}"]`);
+        if (firstCard) firstCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
         if (!arrivalModalShown) {
           arrivalModalShown = true;
           if (navigator.vibrate) navigator.vibrate(200);
-          showDayDetailModal(findItem(target), {
-            onSaved: () => renderList(searchInput.value),
-            onDeleted: () => renderList(searchInput.value),
-          });
+          const matchedItems = matchedRows.map(({ item }) => item);
+          if (matchedItems.length > 1) {
+            showDayGroupModal(matchedItems, 0, {
+              onSaved: () => renderList(searchInput.value),
+              onDeleted: () => renderList(searchInput.value),
+            });
+          } else {
+            showDayDetailModal(matchedItems[0], {
+              onSaved: () => renderList(searchInput.value),
+              onDeleted: () => renderList(searchInput.value),
+            });
+          }
         }
       }
     }

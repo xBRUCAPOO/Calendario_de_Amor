@@ -580,6 +580,154 @@ function showDayDetailModal(item, callbacks) {
 }
 
 /* --------------------------------------------------------------------------
+   NUEVO: VISOR DE "HISTORIAS" — cuando un día del calendario tiene VARIOS
+   días especiales cargados, en vez de ir directo a fechas.html se abre este
+   visor tipo TikTok/Instagram: se ve un día a la vez, con un círculo
+   indicador arriba por cada día de esa fecha, y se pasa de uno a otro
+   deslizando el dedo hacia los costados (o tocando un círculo puntual).
+   -------------------------------------------------------------------------- */
+
+// Arma el contenido de un solo "día" dentro del visor (mismo detalle que
+// showDayDetailModal, pero sin su propio overlay: acá todos los días
+// comparten un único overlay/hoja y se deslizan adentro).
+function buildStorySlideHTML(item, index) {
+  const cat = getCategoryMeta(item.category);
+  const countdown = getCountdownInfo(item);
+  const fullDate = (!item.recurring && item.year)
+    ? `${formatDayRangeLabel(item)} de ${item.year}`
+    : `${formatDayRangeLabel(item)} (todos los años)`;
+
+  return `
+    <div class="story-slide" data-index="${index}">
+      <div class="detail-header">
+        <span class="material-symbols-outlined detail-icon">${cat.icon}</span>
+        <div>
+          <h2>${escapeHTML(item.name)}</h2>
+          <p class="detail-sub">${fullDate} · ${cat.label}</p>
+        </div>
+      </div>
+      <p class="detail-countdown">${countdown.label}</p>
+      ${item.description ? `<p class="detail-description">${parseDescription(item.description)}</p>` : ''}
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-action="share" data-index="${index}">
+          <span class="material-symbols-outlined">share</span> Compartir
+        </button>
+        <button type="button" class="btn btn-secondary" data-action="edit" data-index="${index}">
+          <span class="material-symbols-outlined">edit</span> Editar
+        </button>
+      </div>
+    </div>`;
+}
+
+// Arma el overlay completo: la fila de círculos de arriba + la "cinta" con
+// todos los días en fila (uno por especial) + el botón de cerrar de abajo.
+function buildDayGroupHTML(items) {
+  const dots = items.map((_, i) => `<span class="story-dot ${i === 0 ? 'is-active' : ''}"></span>`).join('');
+  const slides = items.map((item, i) => buildStorySlideHTML(item, i)).join('');
+  return `
+    <div class="modal-overlay" id="dayGroupOverlay">
+      <div class="modal-sheet story-sheet" id="dayGroupSheet" style="--card-accent: ${getAccentColorVar(items[0])};">
+        <div class="story-dots" id="storyDots">${dots}</div>
+        <div class="story-track" id="storyTrack">${slides}</div>
+        <button type="button" class="btn btn-primary btn-block" id="groupCloseBtn">
+          <span class="material-symbols-outlined">close</span> Cerrar
+        </button>
+      </div>
+    </div>`;
+}
+
+// items: lista de días especiales de una misma fecha del calendario.
+// initialIndex: con cuál arranca abierto el visor (por defecto el primero).
+function showDayGroupModal(items, initialIndex, callbacks) {
+  const opts = callbacks || {};
+  const mount = document.createElement('div');
+  mount.innerHTML = buildDayGroupHTML(items);
+  const overlay = mount.firstElementChild;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('is-open'));
+
+  const sheet = overlay.querySelector('#dayGroupSheet');
+  const track = overlay.querySelector('#storyTrack');
+  const dotsEl = overlay.querySelector('#storyDots');
+  let currentIndex = Math.min(Math.max(initialIndex || 0, 0), items.length - 1);
+  let dragging = false;
+  let startX = 0;
+  let baseOffsetPx = 0;
+  let trackWidthPx = 0;
+
+  // Marca el círculo del día actual (más grande y con su color)
+  function updateDots() {
+    dotsEl.querySelectorAll('.story-dot').forEach((dot, i) => dot.classList.toggle('is-active', i === currentIndex));
+  }
+
+  // El color del borde de la hoja y del círculo activo acompaña al día que
+  // se está viendo (cada día especial puede tener su propio color)
+  function updateAccent() {
+    sheet.style.setProperty('--card-accent', getAccentColorVar(items[currentIndex]));
+  }
+
+  // Mueve la "cinta" de días hasta dejar visible el índice pedido
+  function goTo(index, animate) {
+    currentIndex = Math.max(0, Math.min(items.length - 1, index));
+    trackWidthPx = track.getBoundingClientRect().width;
+    track.style.transition = animate === false ? 'none' : `transform var(--dur-base) var(--ease-standard)`;
+    track.style.transform = `translateX(${-currentIndex * trackWidthPx}px)`;
+    updateDots();
+    updateAccent();
+  }
+
+  // Deslizamiento horizontal con el dedo (estilo historias de TikTok/
+  // Instagram): mientras se arrastra, la cinta sigue al dedo sin animación;
+  // al soltar, si se arrastró más de ~18% del ancho, pasa al día siguiente
+  // o anterior; si no, vuelve a acomodarse en el día en el que estaba.
+  track.addEventListener('touchstart', (e) => {
+    dragging = true;
+    startX = e.touches[0].clientX;
+    trackWidthPx = track.getBoundingClientRect().width;
+    baseOffsetPx = -currentIndex * trackWidthPx;
+    track.style.transition = 'none';
+  }, { passive: true });
+
+  track.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    const dx = e.touches[0].clientX - startX;
+    track.style.transform = `translateX(${baseOffsetPx + dx}px)`;
+  }, { passive: true });
+
+  track.addEventListener('touchend', (e) => {
+    if (!dragging) return;
+    dragging = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    const threshold = trackWidthPx * 0.18;
+    if (dx <= -threshold && currentIndex < items.length - 1) goTo(currentIndex + 1);
+    else if (dx >= threshold && currentIndex > 0) goTo(currentIndex - 1);
+    else goTo(currentIndex);
+  });
+
+  // Tocar un círculo puntual también salta directo a ese día
+  dotsEl.querySelectorAll('.story-dot').forEach((dot, i) => {
+    dot.addEventListener('click', () => goTo(i));
+  });
+
+  function close() { overlay.remove(); }
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector('#groupCloseBtn').addEventListener('click', close);
+
+  // Compartir/editar actúan sobre el día que está visible en ese momento
+  overlay.querySelectorAll('[data-action="share"]').forEach((btn) => {
+    btn.addEventListener('click', () => shareSpecialDay(items[Number(btn.dataset.index)]));
+  });
+  overlay.querySelectorAll('[data-action="edit"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      close();
+      openDayModal(items[Number(btn.dataset.index)], opts.onSaved, opts.onDeleted);
+    });
+  });
+
+  goTo(currentIndex, false);
+}
+
+/* --------------------------------------------------------------------------
    MODAL COMPARTIDO — Agregar / Editar día especial
    -------------------------------------------------------------------------- */
 
