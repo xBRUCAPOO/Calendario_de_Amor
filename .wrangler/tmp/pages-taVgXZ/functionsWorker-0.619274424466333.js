@@ -947,7 +947,11 @@ function rowToDay(row) {
     description: row.description,
     colorIndex: row.colorIndex,
     category: row.category,
-    remindDaysBefore: row.remindDaysBefore
+    remindDaysBefore: row.remindDaysBefore,
+    // NUEVO: día/mes de fin para días de varios días (ej. Semana de la
+    // Dulzura). NULL en el resto.
+    endDay: row.endDay,
+    endMonth: row.endMonth
   };
 }
 __name(rowToDay, "rowToDay");
@@ -958,7 +962,7 @@ async function onRequestPut({ request, env: env2, params }) {
   const merged = { ...rowToDay(existing), ...body, id: params.id };
   await env2.DB.prepare(
     `UPDATE special_days
-     SET day = ?, month = ?, year = ?, recurring = ?, name = ?, description = ?, colorIndex = ?, category = ?, remindDaysBefore = ?
+     SET day = ?, month = ?, year = ?, recurring = ?, name = ?, description = ?, colorIndex = ?, category = ?, remindDaysBefore = ?, endDay = ?, endMonth = ?
      WHERE id = ?`
   ).bind(
     merged.day,
@@ -970,6 +974,8 @@ async function onRequestPut({ request, env: env2, params }) {
     merged.colorIndex,
     merged.category,
     merged.remindDaysBefore ?? null,
+    merged.endDay ?? null,
+    merged.endMonth ?? null,
     params.id
   ).run();
   return json(merged);
@@ -981,7 +987,7 @@ async function onRequestDelete({ env: env2, params }) {
 }
 __name(onRequestDelete, "onRequestDelete");
 
-// api/days.js
+// api/days/days-[id].js
 function json2(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -1000,23 +1006,86 @@ function rowToDay2(row) {
     description: row.description,
     colorIndex: row.colorIndex,
     category: row.category,
-    remindDaysBefore: row.remindDaysBefore
+    remindDaysBefore: row.remindDaysBefore,
+    // NUEVO: día/mes de fin para días de varios días (ej. Semana de la
+    // Dulzura). NULL en el resto.
+    endDay: row.endDay,
+    endMonth: row.endMonth
   };
 }
 __name(rowToDay2, "rowToDay");
+async function onRequestPut2({ request, env: env2, params }) {
+  const existing = await env2.DB.prepare("SELECT * FROM special_days WHERE id = ?").bind(params.id).first();
+  if (!existing) return json2({ error: "No encontrado" }, 404);
+  const body = await request.json();
+  const merged = { ...rowToDay2(existing), ...body, id: params.id };
+  await env2.DB.prepare(
+    `UPDATE special_days
+     SET day = ?, month = ?, year = ?, recurring = ?, name = ?, description = ?, colorIndex = ?, category = ?, remindDaysBefore = ?, endDay = ?, endMonth = ?
+     WHERE id = ?`
+  ).bind(
+    merged.day,
+    merged.month,
+    merged.year ?? null,
+    merged.recurring ? 1 : 0,
+    merged.name,
+    merged.description ?? "",
+    merged.colorIndex,
+    merged.category,
+    merged.remindDaysBefore ?? null,
+    merged.endDay ?? null,
+    merged.endMonth ?? null,
+    params.id
+  ).run();
+  return json2(merged);
+}
+__name(onRequestPut2, "onRequestPut");
+async function onRequestDelete2({ env: env2, params }) {
+  await env2.DB.prepare("DELETE FROM special_days WHERE id = ?").bind(params.id).run();
+  return new Response(null, { status: 204 });
+}
+__name(onRequestDelete2, "onRequestDelete");
+
+// api/days.js
+function json3(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json" }
+  });
+}
+__name(json3, "json");
+function rowToDay3(row) {
+  return {
+    id: row.id,
+    day: row.day,
+    month: row.month,
+    year: row.year,
+    recurring: !!row.recurring,
+    name: row.name,
+    description: row.description,
+    colorIndex: row.colorIndex,
+    category: row.category,
+    remindDaysBefore: row.remindDaysBefore,
+    // NUEVO: día/mes de fin para días de varios días (ej. Semana de la
+    // Dulzura). NULL en el resto.
+    endDay: row.endDay,
+    endMonth: row.endMonth
+  };
+}
+__name(rowToDay3, "rowToDay");
 async function onRequestGet({ env: env2 }) {
   const { results } = await env2.DB.prepare(
     "SELECT * FROM special_days ORDER BY month, day"
   ).all();
-  return json2(results.map(rowToDay2));
+  return json3(results.map(rowToDay3));
 }
 __name(onRequestGet, "onRequestGet");
 async function onRequestPost({ request, env: env2 }) {
   const body = await request.json();
   const id = body.id || crypto.randomUUID();
   await env2.DB.prepare(
-    `INSERT INTO special_days (id, day, month, year, recurring, name, description, colorIndex, category, remindDaysBefore)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO special_days (id, day, month, year, recurring, name, description, colorIndex, category, remindDaysBefore, endDay, endMonth)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     id,
     body.day,
@@ -1027,13 +1096,15 @@ async function onRequestPost({ request, env: env2 }) {
     body.description ?? "",
     body.colorIndex ?? 1,
     body.category ?? "otro",
-    body.remindDaysBefore ?? null
+    body.remindDaysBefore ?? null,
+    body.endDay ?? null,
+    body.endMonth ?? null
   ).run();
-  return json2({ ...body, id }, 201);
+  return json3({ ...body, id }, 201);
 }
 __name(onRequestPost, "onRequestPost");
 
-// ../.wrangler/tmp/pages-7YKPKi/functionsRoutes-0.8423727879098669.mjs
+// ../.wrangler/tmp/pages-taVgXZ/functionsRoutes-0.43253159085907233.mjs
 var routes = [
   {
     routePath: "/api/days/:id",
@@ -1048,6 +1119,20 @@ var routes = [
     method: "PUT",
     middlewares: [],
     modules: [onRequestPut]
+  },
+  {
+    routePath: "/api/days/days-:id",
+    mountPath: "/api/days",
+    method: "DELETE",
+    middlewares: [],
+    modules: [onRequestDelete2]
+  },
+  {
+    routePath: "/api/days/days-:id",
+    mountPath: "/api/days",
+    method: "PUT",
+    middlewares: [],
+    modules: [onRequestPut2]
   },
   {
     routePath: "/api/days",

@@ -41,13 +41,38 @@
     const specialDays = await getSpecialDays();
     // Por cada día del mes juntamos TODOS los especiales que caen ahí (para
     // poder mostrar cuántos hay, aunque el color visible sea el del último).
+    // NUEVO: si un día especial abarca un rango de varias fechas (ej.
+    // "Semana de la Dulzura", con endDay), se reparte en TODOS los días que
+    // ocupa, no solo en el primero.
     const byDay = {};
+    // NUEVO: por cada día, si la celda debe dibujar la línea que la conecta
+    // con la de al lado (izquierda/derecha) para marcar visualmente que es
+    // parte de un mismo rango de varios días. Solo se calcula para rangos
+    // que caen enteros dentro de este mismo mes (no soporta rangos que
+    // crucen de un mes a otro).
+    const rangeConnections = {};
     specialDays.forEach((item) => {
       if (item.month !== viewMonth + 1) return;
       const matchesYear = item.recurring || !item.year || item.year === viewYear;
       if (!matchesYear) return;
-      if (!byDay[item.day]) byDay[item.day] = [];
-      byDay[item.day].push(item);
+
+      const endDay = item.endDay != null ? item.endDay : item.day;
+      for (let d = item.day; d <= endDay; d++) {
+        if (!byDay[d]) byDay[d] = [];
+        byDay[d].push(item);
+      }
+
+      if (item.endDay != null && (item.endMonth || item.month) === item.month) {
+        for (let d = item.day; d <= item.endDay; d++) {
+          // Columna de la semana para este día (0 = lunes ... 6 = domingo),
+          // para no dibujar la línea hacia afuera de la fila cuando el
+          // rango cruza de una semana a la siguiente.
+          const col = (firstWeekday + (d - 1)) % 7;
+          if (!rangeConnections[d]) rangeConnections[d] = {};
+          if (d > item.day && col !== 0) rangeConnections[d].left = true;
+          if (d < item.endDay && col !== 6) rangeConnections[d].right = true;
+        }
+      }
     });
 
     let html = '';
@@ -71,6 +96,10 @@
         if (items.some((it) => it.category === 'feriado')) {
           extraDot += `<span class="day-holiday-label">Feriado</span>`;
         }
+        // NUEVO: si este día forma parte de un rango de varias fechas,
+        // agregamos la clase que dibuja la línea conectora (ver css/style.css)
+        if (rangeConnections[day] && rangeConnections[day].left) classes.push('range-connect-left');
+        if (rangeConnections[day] && rangeConnections[day].right) classes.push('range-connect-right');
       }
       html += `<div class="${classes.join(' ')}" ${style} data-day="${day}">${day}${extraDot}</div>`;
     }

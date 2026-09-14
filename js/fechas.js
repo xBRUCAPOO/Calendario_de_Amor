@@ -45,14 +45,30 @@
   modeLabelDates.style.opacity = '1';
   modeLabelHolidays.style.opacity = '0.5';
 
-  // FIX: pone el switch en modo "Feriados" (y ajusta las etiquetas/el filtro
-  // de categoría) sin disparar el evento "change", para usarlo antes del
-  // primer renderizado cuando la tarjeta de destino es un feriado.
+  // FIX: pone el switch en modo "Feriados" (y ajusta etiquetas/filtro de
+  // categoría) sin disparar el evento "change", para usarlo antes del primer
+  // renderizado cuando la tarjeta de destino (llegada desde el calendario)
+  // es un feriado.
   function activateHolidaysMode() {
     showHolidaysSwitch.checked = true;
     modeLabelDates.style.opacity = '0.5';
     modeLabelHolidays.style.opacity = '1';
     categoryFilterEl.style.display = 'none';
+  }
+
+  // NUEVO: determina si un ítem corresponde al día señalado por el link del
+  // calendario (?day=D&month=M): coincide con su fecha exacta, o cae dentro
+  // de su rango de varios días (ej. "Semana de la Dulzura") cuando el rango
+  // entero está dentro de ese mismo mes.
+  function matchesHighlightedDate(item, day, month) {
+    if (item.day === day && item.month === month) return true;
+    if (item.endDay != null) {
+      const endMonth = item.endMonth || item.month;
+      if (item.month === month && endMonth === month) {
+        return day >= item.day && day <= item.endDay;
+      }
+    }
+    return false;
   }
 
   function renderCategoryFilter() {
@@ -103,7 +119,7 @@
       return `
       <div class="date-card" style="--card-accent: ${getAccentColorVar(item)};" data-id="${item.id}" data-day="${item.day}" data-month="${item.month}">
         <div class="date-card-top">
-          <span class="date-card-day">${formatDayMonth(item.day, item.month)}</span>
+          <span class="date-card-day">${formatDayRangeLabel(item)}</span>
           <div class="date-card-info">
             <p class="date-card-title">${escapeHTML(item.name)}</p>
             <p class="date-card-countdown">${countdown.label}</p>
@@ -181,8 +197,13 @@
     // Si llegamos desde el calendario con un día puntual: resaltamos la
     // tarjeta y, solo la primera vez (no en cada re-render posterior),
     // abrimos el menú flotante con el detalle completo y vibramos.
+    // NUEVO: la búsqueda ahora usa matchesHighlightedDate() y el data-id de
+    // la tarjeta (antes usaba data-day/data-month exactos), para que también
+    // funcione si el día tocado en el calendario es parte de un rango de
+    // varias fechas (ej. cualquier día de la Semana de la Dulzura).
     if (highlightDay && highlightMonth) {
-      const target = listEl.querySelector(`.date-card[data-day="${highlightDay}"][data-month="${highlightMonth}"]`);
+      const matched = rows.find(({ item }) => matchesHighlightedDate(item, highlightDay, highlightMonth));
+      const target = matched ? listEl.querySelector(`.date-card[data-id="${matched.item.id}"]`) : null;
       if (target) {
         target.classList.add('is-highlighted');
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -206,14 +227,13 @@
 
   // FIX: antes de pintar la lista por primera vez, si venimos desde el
   // calendario apuntando a un día que es feriado, activamos el switch
-  // "Feriados" automáticamente. Antes quedaba en modo "Días importantes"
-  // por defecto y el feriado quedaba filtrado afuera, así que la tarjeta
-  // nunca se mostraba (ni el resaltado, ni el menú flotante, ni la vibración)
-  // hasta que el usuario tocaba el switch a mano.
+  // "Feriados" automáticamente (si no, queda en modo "Días importantes" por
+  // defecto y el feriado queda filtrado afuera, sin resaltado ni vibración,
+  // hasta que el usuario toca el switch a mano).
   async function initView() {
     if (highlightDay && highlightMonth) {
       const allDays = await getSpecialDays();
-      const targetItem = allDays.find((it) => it.day === highlightDay && it.month === highlightMonth);
+      const targetItem = allDays.find((it) => matchesHighlightedDate(it, highlightDay, highlightMonth));
       if (targetItem && targetItem.category === 'feriado') {
         activateHolidaysMode();
       }

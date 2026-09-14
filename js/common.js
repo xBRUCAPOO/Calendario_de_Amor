@@ -78,11 +78,12 @@ function queuePendingOp(op) {
 }
 
 // Datos de ejemplo la primera vez que se abre la app: los feriados nacionales
-// confirmados (+ el feriado propio de Córdoba Capital) y las fechas más
-// conocidas "de pareja". Se guardan como cualquier día cargado a mano: se
-// pueden editar o borrar sin problema.
+// confirmados (+ el feriado propio de Córdoba Capital), las fechas más
+// conocidas "de pareja" y otras fechas especiales (ver buildOtrasFechasSeedDays
+// más abajo). Se guardan como cualquier día cargado a mano: se pueden editar
+// o borrar sin problema.
 function seedDefaultDays() {
-  const seed = [...buildHolidaySeedDays(), ...buildCoupleSeedDays()];
+  const seed = [...buildHolidaySeedDays(), ...buildCoupleSeedDays(), ...buildOtrasFechasSeedDays()];
   writeCache(seed);
   return seed;
 }
@@ -164,15 +165,99 @@ function buildCoupleSeedDays() {
   ];
 }
 
-// Sube TODOS los días predefinidos (feriados + fechas de pareja) al backend
-// (D1), uno por uno. Pensada para correrse una sola vez a mano cuando ya
-// tenés el backend conectado y querés los mismos días de ejemplo que
-// aparecen en modo offline. Se puede correr desde la consola del navegador:
+// NUEVO: resto de fechas del año pedidas para completar el calendario
+// (Reyes, Día de la Mujer, Semana de la Dulzura, Día del Amigo, Halloween,
+// Nochebuena, Fin de año, etc.), investigadas para que la descripción de
+// cada una sea precisa y no un genérico. No se repiten acá las que ya
+// estaban cargadas en buildHolidaySeedDays/buildCoupleSeedDays (Año Nuevo,
+// San Valentín, Día del Trabajador, Día de la Novia del 1° de agosto,
+// Inmaculada Concepción y Navidad).
+//
+// Tres de estas fechas son "movibles" (cambian de día todos los años:
+// Pascua, y las que se definen como "tal domingo de tal mes"). Siguiendo el
+// mismo criterio que ya usa buildHolidaySeedDays con los feriados
+// trasladables, las cargamos como fecha puntual del año en curso (2026,
+// ya calculadas) en vez de sumar un motor de reglas nuevo a la app. Para
+// 2027 va a hacer falta recalcularlas y cargarlas de nuevo a mano.
+function buildOtrasFechasSeedDays() {
+  const fijas = [
+    { day: 6, month: 1, name: 'Día de Reyes', colorIndex: 2,
+      description: 'El **Día de Reyes** (Epifanía) conmemora, según el Nuevo Testamento, la visita de los Reyes Magos —Melchor, Gaspar y Baltasar— al Niño Jesús, y cierra el ciclo de fiestas que arranca en Navidad. En muchos países de habla hispana es la fecha en que los chicos reciben regalos (dejando pasto y agua para los camellos la noche anterior). En Argentina no es feriado ni tan popular como el 25 de diciembre, pero sigue siendo una buena excusa para un mini regalo sorpresa.' },
+    { day: 8, month: 3, name: 'Día Internacional de la Mujer', colorIndex: 35,
+      description: 'La ONU estableció el **8 de marzo** como el **Día Internacional de la Mujer** en homenaje a la lucha histórica por la igualdad de derechos, recordando entre otros hechos a las trabajadoras textiles que murieron en incendios fabriles a comienzos del siglo XX (como el de la fábrica Triangle en Nueva York, en 1911). No es un feriado, pero es una fecha de fuerte visibilidad social en la que vale la pena tener un gesto de cariño.' },
+    { day: 20, month: 7, name: 'Día del Amigo', colorIndex: 38,
+      description: 'El **Día del Amigo** se celebra en Argentina cada 20 de julio por iniciativa del odontólogo **Enrique Febbraro**, quien en 1969, al ver por TV la llegada del hombre a la Luna, la interpretó como un gesto de amistad de toda la humanidad y empezó a difundir la idea por carta a otros países. Hoy también se festeja en Uruguay, Brasil, Chile y España. No es exclusivo de amigos: en pareja también es una buena excusa para algo divertido.' },
+    { day: 21, month: 9, name: 'Día de la Primavera y del Estudiante', colorIndex: 20,
+      description: 'El **21 de septiembre** mezcla dos festejos sin relación real entre sí: el **Día del Estudiante**, instaurado en 1902 en homenaje a Domingo F. Sarmiento (sus restos habían llegado a Buenos Aires ese día en 1888), y el **Día de la Primavera**, que se popularizó como celebración masiva recién a mediados del siglo XX. La coincidencia de fechas es casualidad, pero terminó siendo la excusa perfecta para un picnic, una salida al aire libre o un gesto simple hacia la otra persona.' },
+    { day: 31, month: 10, name: 'Halloween', colorIndex: 48,
+      description: '**Halloween** viene del **Samhain**, un festejo celta de fin de cosecha en el que se creía que el mundo de los vivos y el de los muertos se acercaban. Inmigrantes irlandeses lo llevaron a Estados Unidos en el siglo XIX, donde se transformó en la fiesta de disfraces y calabazas actual, y desde ahí se difundió al resto del mundo, incluida Argentina. No es una fecha tradicional del país, pero da pie a un detalle temático.' },
+    { day: 24, month: 12, name: 'Nochebuena', colorIndex: 13,
+      description: 'La **Nochebuena** es la víspera de Navidad: la noche del 24 de diciembre en la que, según la tradición cristiana, nació Jesús. En Argentina es la cena familiar más importante del año, con brindis a las 00:00 y fuegos artificiales, aunque a diferencia del 25 no es en sí un feriado nacional (el feriado es el día de Navidad, que ya tenés cargado).' },
+    { day: 31, month: 12, name: 'Fin de año', colorIndex: 33,
+      description: 'El **31 de diciembre** cierra el año con la cena de Fin de Año y el brindis de medianoche ya entrando al 1° de enero. No es un feriado nacional, pero la actividad laboral y comercial se reduce igual. Es un buen momento para una carta que repase lo vivido en el año junto a la otra persona.' },
+  ];
+
+  // Semana de la Dulzura: única fecha "de varios días" del calendario, con
+  // endDay marcando el último día del rango (siempre 1 al 7 de julio, no
+  // se mueve de año a año).
+  const rango = {
+    id: makeId(), day: 1, month: 7, endDay: 7, year: null, recurring: true,
+    name: 'Semana de la Dulzura', category: 'otro', colorIndex: 30, remindDaysBefore: 2,
+    description: 'La **Semana de la Dulzura** se festeja del **1 al 7 de julio** con el lema "una golosina por un beso". Nació en 1989 como una campaña comercial de **Arcor** junto a la Asociación de Distribuidores de Golosinas (ADGyA) para reactivar las ventas en pleno invierno, pero se instaló como costumbre real: regalar un alfajor, un bombón o un chocolate a quien uno quiere. Es una tradición exclusivamente argentina.',
+  };
+
+  // Fechas "movibles" del año en curso (ver comentario de la función):
+  // Pascua 2026 cae el 5 de abril (calculada), y por pura coincidencia de
+  // calendario el primer domingo de abril de 2026 también es el 5.
+  const movibles2026 = [
+    { day: 5, month: 4, name: 'Día de la Novia', category: 'pareja', colorIndex: 6,
+      description: 'A diferencia del "Día de la Novia" del 1° de agosto (importado de EE.UU. por redes sociales, y que ya tenés cargado en agosto), en Argentina existe una tradición más antigua que ubica este festejo el **primer domingo de abril**. En 2026 cae el **5 de abril**. No tiene un origen histórico documentado, pero se instaló como jornada para agasajar a la pareja con flores, una carta o algo hecho a mano. Al ser un domingo fijo (no un día fijo), la fecha cambia cada año: para 2027 hay que recalcularla y cargarla de nuevo.' },
+    { day: 5, month: 4, name: 'Domingo de Pascua', category: 'otro', colorIndex: 9,
+      description: 'El **Domingo de Pascua** cierra la Semana Santa y conmemora, según la tradición cristiana, la resurrección de Jesús. Al depender del calendario lunar (se calcula como el primer domingo después de la primera luna llena de la primavera boreal), la fecha cambia todos los años; en 2026 cae el **5 de abril**, coincidiendo con Viernes Santo (2 días antes, ya cargado como feriado). Es la excusa clásica para el huevo de chocolate. Para 2027 hay que recalcular la fecha.' },
+    { day: 18, month: 10, name: 'Día de la Madre', category: 'otro', colorIndex: 44,
+      description: 'En Argentina el **Día de la Madre** se celebra el **tercer domingo de octubre** (en 2026, el **18 de octubre**), a diferencia de la mayoría de los países de la región, que lo festejan en mayo. El origen se remonta a 1931, cuando el Papa Pío XI dedicó el 11 de octubre a la "Divina Maternidad de María"; el gobierno argentino de entonces adoptó el domingo más cercano a esa fecha y con el tiempo quedó fijado en el tercer domingo del mes. Al cambiar todos los años, para 2027 hay que recalcular la fecha.' },
+  ];
+
+  const items = fijas.map((f) => ({
+    id: makeId(), day: f.day, month: f.month, year: null, recurring: true,
+    name: f.name, category: 'otro', colorIndex: f.colorIndex, remindDaysBefore: 2,
+    description: f.description,
+  }));
+  items.push(rango);
+  movibles2026.forEach((m) => items.push({
+    id: makeId(), day: m.day, month: m.month, year: 2026, recurring: false,
+    name: m.name, category: m.category, colorIndex: m.colorIndex, remindDaysBefore: 3,
+    description: m.description,
+  }));
+  return items;
+}
+
+// Sube TODOS los días predefinidos (feriados + fechas de pareja + otras
+// fechas especiales) al backend (D1), uno por uno. Pensada para correrse una
+// sola vez a mano cuando ya tenés el backend conectado y querés los mismos
+// días de ejemplo que aparecen en modo offline. Se puede correr desde la
+// consola del navegador:
 // seedBackendDefaults().then(r => console.log('cargados:', r.length));
 async function seedBackendDefaults() {
-  const defaults = [...buildHolidaySeedDays(), ...buildCoupleSeedDays()];
+  const defaults = [...buildHolidaySeedDays(), ...buildCoupleSeedDays(), ...buildOtrasFechasSeedDays()];
   const created = [];
   for (const day of defaults) {
+    created.push(await addSpecialDay(day));
+  }
+  return created;
+}
+
+// NUEVO: agrega SOLO las fechas nuevas de buildOtrasFechasSeedDays (Reyes,
+// Día de la Mujer, Semana de la Dulzura, Día del Amigo, etc.) sin volver a
+// cargar los feriados ni las fechas de pareja que ya tenías. Pensada para
+// una app que YA está en uso (con datos en localStorage y/o D1): seedBackendDefaults()
+// duplicaría todo lo que ya existe, esta función no. Se corre una sola vez
+// desde la consola del navegador:
+// seedOtrasFechas().then(r => console.log('cargadas:', r.length));
+async function seedOtrasFechas() {
+  const nuevas = buildOtrasFechasSeedDays();
+  const created = [];
+  for (const day of nuevas) {
     created.push(await addSpecialDay(day));
   }
   return created;
@@ -279,6 +364,15 @@ function getNextOccurrence(item) {
     return new Date(item.year, item.month - 1, item.day);
   }
   let candidate = new Date(today.getFullYear(), item.month - 1, item.day);
+  // NUEVO: si el día abarca un rango de varias fechas (ej. "Semana de la
+  // Dulzura", con endDay) y hoy cae dentro de ese rango, lo consideramos
+  // vigente y NO saltamos al año que viene, aunque el día de inicio ya
+  // haya pasado.
+  if (item.endDay != null) {
+    const endMonth = item.endMonth || item.month;
+    const endCandidate = new Date(today.getFullYear(), endMonth - 1, item.endDay);
+    if (candidate <= today && today <= endCandidate) return candidate;
+  }
   if (candidate < today) {
     candidate = new Date(today.getFullYear() + 1, item.month - 1, item.day);
   }
@@ -290,6 +384,16 @@ function getCountdownInfo(item) {
   const target = getNextOccurrence(item);
   const diffDays = Math.round((target - today) / 86400000);
 
+  // NUEVO: si es un día de varios días (endDay) y hoy cae dentro del rango,
+  // mostramos "está en curso" en vez de una cuenta regresiva o "pasó hace...".
+  if (item.endDay != null) {
+    const endMonth = item.endMonth || item.month;
+    const endDate = new Date(target.getFullYear(), endMonth - 1, item.endDay);
+    if (target <= today && today <= endDate) {
+      return { label: '¡Está en curso!', diffDays: 0, target, isPast: false };
+    }
+  }
+
   if (diffDays === 0) return { label: '¡Es hoy!', diffDays, target, isPast: false };
   if (diffDays > 0) return { label: `Faltan: ${diffDays} día${diffDays === 1 ? '' : 's'}`, diffDays, target, isPast: false };
   return { label: `Pasó hace ${Math.abs(diffDays)} día${Math.abs(diffDays) === 1 ? '' : 's'}`, diffDays, target, isPast: true };
@@ -297,6 +401,16 @@ function getCountdownInfo(item) {
 
 function formatDayMonth(day, month) {
   return `${day} de ${MESES[month - 1]}`;
+}
+
+// NUEVO: etiqueta de fecha para tarjetas y detalle. Para un día normal es
+// igual a formatDayMonth; para un día de varios días (endDay, ej. "Semana
+// de la Dulzura") arma "1 al 7 de julio" en vez de mostrar solo el inicio.
+function formatDayRangeLabel(item) {
+  if (item.endDay == null) return formatDayMonth(item.day, item.month);
+  const endMonth = item.endMonth || item.month;
+  if (endMonth === item.month) return `${item.day} al ${item.endDay} de ${MESES[item.month - 1]}`;
+  return `${formatDayMonth(item.day, item.month)} al ${formatDayMonth(item.endDay, endMonth)}`;
 }
 
 // Color de acento a usar para un día especial: los feriados siempre se
@@ -341,7 +455,7 @@ function parseDescription(raw) {
 
 async function shareSpecialDay(item) {
   const countdown = getCountdownInfo(item);
-  const text = `${item.name} — ${formatDayMonth(item.day, item.month)} (${countdown.label})`;
+  const text = `${item.name} — ${formatDayRangeLabel(item)} (${countdown.label})`;
   if (navigator.share) {
     try {
       await navigator.share({ title: item.name, text });
@@ -417,8 +531,8 @@ function buildDayDetailHTML(item) {
   const cat = getCategoryMeta(item.category);
   const countdown = getCountdownInfo(item);
   const fullDate = (!item.recurring && item.year)
-    ? `${formatDayMonth(item.day, item.month)} de ${item.year}`
-    : `${formatDayMonth(item.day, item.month)} (todos los años)`;
+    ? `${formatDayRangeLabel(item)} de ${item.year}`
+    : `${formatDayRangeLabel(item)} (todos los años)`;
 
   return `
     <div class="modal-overlay" id="dayDetailOverlay">

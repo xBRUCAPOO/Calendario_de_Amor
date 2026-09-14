@@ -14,5 +14,11 @@ CREATE TABLE IF NOT EXISTS special_days (
   description TEXT DEFAULT '',
   colorIndex INTEGER NOT NULL DEFAULT 1, -- 1 a 50, matchea --special-color-N en style.css
   category TEXT NOT NULL DEFAULT 'otro', -- pareja | cumpleanos | aniversario | feriado | otro
-  remindDaysBefore INTEGER               -- NULL = sin recordatorio, 0 = el mismo día
+  remindDaysBefore INTEGER,              -- NULL = sin recordatorio, 0 = el mismo día
+  -- NUEVO: día/mes de fin, solo para días que abarcan un rango de varias
+  -- fechas (ej. "Semana de la Dulzura", 1 al 7 de julio). NULL en el resto.
+  -- endMonth solo hace falta si el rango cruza de un mes a otro; si es NULL
+  -- se asume el mismo mes que "month".
+  endDay INTEGER,
+  endMonth INTEGER
 );

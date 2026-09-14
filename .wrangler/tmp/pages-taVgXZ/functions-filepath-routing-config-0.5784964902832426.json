@@ -17,6 +17,22 @@
       ]
     },
     {
+      "routePath": "/api/days/days-:id",
+      "mountPath": "/api/days",
+      "method": "DELETE",
+      "module": [
+        "api/days/days-[id].js:onRequestDelete"
+      ]
+    },
+    {
+      "routePath": "/api/days/days-:id",
+      "mountPath": "/api/days",
+      "method": "PUT",
+      "module": [
+        "api/days/days-[id].js:onRequestPut"
+      ]
+    },
+    {
       "routePath": "/api/days",
       "mountPath": "/api",
       "method": "GET",
